@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="color-scheme" content="dark">
+    <title>Joseph Marshall — Audio Post-Production Editor</title>
+    <meta name="description" content="Joseph Marshall — Audio Post-Production Editor, Composer &amp; Sound Engineer. Portfolio of dialogue editing, sound design, and mixing work for film, TV and broadcast.">
+    <meta property="og:title" content="Joseph Marshall — Audio Post-Production Editor">
+    <meta property="og:description" content="Portfolio of dialogue editing, sound design, and mixing work for film, TV and broadcast.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Fonts: Bebas Neue (display), Inter (body), IBM Plex Mono (timecode/technical) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'stage-black': '#0c0c0b',
+                        'reel-card': '#161513',
+                        'reel-border': '#2b2925',
+                        'tape-cream': '#ede6d6',
+                        'tape-cream-dim': '#a8a294',
+                        'vu-amber': '#e8a33d',
+                        'vu-amber-dim': '#8a6a34',
+                        'rec-red': '#c1272d'
+                    },
+                    fontFamily: {
+                        'display': ['"Bebas Neue"', 'sans-serif'],
+                        'body': ['Inter', 'sans-serif'],
+                        'mono': ['"IBM Plex Mono"', 'monospace']
+                    },
+                    animation: {
+                        'blink': 'blink 1s steps(1) infinite',
+                        'reveal': 'reveal 0.7s ease-out forwards',
+                        'flicker': 'flicker 4s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        blink: {
+                            '0%, 49%': { opacity: '1' },
+                            '50%, 100%': { opacity: '0.15' }
+                        },
+                        reveal: {
+                            '0%': { transform: 'translateY(24px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        flicker: {
+                            '0%, 100%': { opacity: '0.9' },
+                            '92%': { opacity: '0.9' },
+                            '93%': { opacity: '0.55' },
+                            '94%': { opacity: '0.9' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* ---------- Base ---------- */
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c0c0b;
+        }
+
+        /* ---------- Film grain overlay ---------- */
+        .grain-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0.05;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ---------- Scrollbar ---------- */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #0c0c0b; }
+        ::-webkit-scrollbar-thumb { background: #e8a33d; border-radius: 0; }
+
+        /* Scroll-triggered reveal animation removed — content is simply visible.
+           (Two rounds of visibility bugs from scroll-timing/JS dependency was
+           not worth a fade-in effect. Simpler and guaranteed to work.) */
+
+        /* ---------- Slate / clapperboard section header ---------- */
+        .slate-stripe {
+            background: repeating-linear-gradient(
+                -35deg,
+                #ede6d6 0px, #ede6d6 22px,
+                #17160f 22px, #17160f 44px
+            );
+            height: 10px;
+        }
+        .slate-header {
+            border: 1px solid #2b2925;
+            background: #141310;
+        }
+        .hairline {
+            height: 1px;
+            background: #2b2925;
+        }
+        /* ---------- Themed section-divider patterns ---------- */
+        /* Bar row (used by the Skills/meter divider) */
+        .bar-row {
+            display: flex;
+            gap: 3px;
+            height: 16px;
+            width: 100%;
+        }
+        .bar-row span {
+            flex: 1 1 0;
+            min-width: 2px;
+            background: #e8a33d;
+        }
+        .bar-row.meter { align-items: flex-end; }
+        .bar-row.meter span { border-radius: 1px 1px 0 0; }
+
+        /* Fader on a horizontal track (Work divider) */
+        .pattern-fader-track {
+            position: relative;
+            height: 16px;
+        }
+        .pattern-fader-track .track-rail {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background: #2b2925;
+            transform: translateY(-50%);
+        }
+        .pattern-fader-track .fader-cap {
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background: #e8a33d;
+            border: 1px solid #0c0c0b;
+        }
+
+        /* ---------- Timecode ---------- */
+        .timecode-display {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.08em;
+        }
+        .rec-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 9999px;
+            background: #c1272d;
+            box-shadow: 0 0 8px 1px rgba(193,39,45,0.7);
+        }
+
+        /* ---------- Sprocket perforations on cards ---------- */
+        .sprocket-card {
+            position: relative;
+            background: #161513;
+            border: 1px solid #2b2925;
+        }
+        .sprocket-strip {
+            width: 100%;
+            height: 14px;
+            background-image: radial-gradient(circle, #0c0c0b 3.5px, transparent 3.6px);
+            background-size: 22px 14px;
+            background-position: 11px center;
+            background-color: #201e1a;
+            background-repeat: repeat-x;
+        }
+
+        /* ---------- LED segmented meter ---------- */
+        .led-track {
+            display: flex;
+            gap: 3px;
+            width: 100%;
+        }
+        .led-seg {
+            height: 14px;
+            flex: 1 1 0;
+            background: #221f1a;
+            border: 1px solid #33302a;
+        }
+        .led-seg.lit {
+            background: #e8a33d;
+            box-shadow: 0 0 6px rgba(232,163,61,0.6);
+        }
+        .led-seg.lit.peak {
+            background: #c1272d;
+            box-shadow: 0 0 6px rgba(193,39,45,0.6);
+        }
+
+        /* ---------- Buttons ---------- */
+        .btn-amber {
+            background: #e8a33d;
+            color: #0c0c0b;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-amber:hover { box-shadow: 0 0 0 2px #e8a33d, 0 0 22px rgba(232,163,61,0.4); transform: translateY(-1px); }
+        .btn-outline {
+            border: 2px solid #e8a33d;
+            color: #e8a33d;
+            transition: all 0.2s ease;
+        }
+        .btn-outline:hover { background: #e8a33d; color: #0c0c0b; transform: translateY(-1px); }
+
+        .card-hover { transition: all 0.25s ease; border-color: #2b2925; }
+        .card-hover:hover { border-color: #e8a33d; transform: translateY(-4px); }
+
+        /* ---------- Work filter buttons ---------- */
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid #2b2925;
+            background: transparent;
+            color: #a8a294;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .filter-btn:hover { border-color: #e8a33d; color: #ede6d6; }
+        .filter-btn.is-active { background: #e8a33d; color: #0c0c0b; border-color: #e8a33d; }
+
+        /* ---------- Defensive color fallback ----------
+           Re-declares the custom palette as plain CSS so text colour never
+           depends on the Tailwind CDN runtime generating these utilities. */
+        .text-tape-cream { color: #ede6d6 !important; }
+        .text-tape-cream-dim { color: #a8a294 !important; }
+        .text-vu-amber { color: #e8a33d !important; }
+        .text-rec-red { color: #c1272d !important; }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            .rec-dot, .animate-blink, .animate-flicker { animation: none !important; }
+            * { transition: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-stage-black text-tape-cream font-body">
+    <div class="grain-overlay"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-stage-black/95 backdrop-blur-md border-b border-reel-border z-50">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <div class="font-display text-2xl tracking-wide text-tape-cream">JOSEPH <span class="text-vu-amber">MARSHALL</span></div>
+                <ul class="hidden md:flex space-x-8 font-mono text-xs uppercase tracking-widest">
+                    <li><a href="#home" class="hover:text-vu-amber transition">Home</a></li>
+                    <li><a href="#about" class="hover:text-vu-amber transition">About</a></li>
+                    <li><a href="#work" class="hover:text-vu-amber transition">Work</a></li>
+                    <li><a href="#skills" class="hover:text-vu-amber transition">Skills</a></li>
+                    <li><a href="#references" class="hover:text-vu-amber transition">References</a></li>
+                    <li><a href="#education" class="hover:text-vu-amber transition">Education</a></li>
+                    <li><a href="#contact" class="hover:text-vu-amber transition">Contact</a></li>
+                </ul>
+                <button class="md:hidden text-tape-cream" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+            <div id="mobileMenu" class="hidden md:hidden mt-4 space-y-1 font-mono text-sm uppercase tracking-widest">
+                <a href="#home" class="block py-2 hover:text-vu-amber">Home</a>
+                <a href="#about" class="block py-2 hover:text-vu-amber">About</a>
+                <a href="#work" class="block py-2 hover:text-vu-amber">Work</a>
+                <a href="#skills" class="block py-2 hover:text-vu-amber">Skills</a>
+                <a href="#references" class="block py-2 hover:text-vu-amber">References</a>
+                <a href="#education" class="block py-2 hover:text-vu-amber">Education</a>
+                <a href="#contact" class="block py-2 hover:text-vu-amber">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============ HERO ============ -->
+    <section id="home" class="min-h-screen flex items-center justify-center pt-20 relative overflow-hidden">
+        <!-- Background reel video — autoplays muted, sits behind all text.
+             Replace the <source> src below with your actual reel file/path
+             (e.g. "assets/hero-reel.mp4"), and swap the poster for a real
+             first-frame image once you have one. -->
+        <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover z-0"
+            autoplay muted loop playsinline
+            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%230c0c0b'/%3E%3Ctext x='50%25' y='50%25' font-family='monospace' font-size='36' fill='%238a6a34' text-anchor='middle' dominant-baseline='middle'%3EAdd your reel video here%3C/text%3E%3C/svg%3E">
+            <source src="[path to your reel video, e.g. assets/hero-reel.mp4]" type="video/mp4">
+        </video>
+        <!-- Dark wash over the video so hero text stays readable regardless of footage -->
+        <div class="absolute inset-0 z-[1] bg-stage-black/60 pointer-events-none"></div>
+
+        <div class="container mx-auto px-6 z-10 relative">
+            <div class="max-w-4xl mx-auto text-center">
+
+                <!-- Timecode readout -->
+                <div class="flex items-center justify-center gap-3 mb-8 font-mono text-vu-amber text-sm">
+                    <span class="rec-dot animate-blink"></span>
+                    <span>REC</span>
+                    <span id="timecode" class="timecode-display">00:00:00:00</span>
+                    <span class="text-tape-cream-dim">25fps</span>
+                </div>
+
+                <h1 class="font-display text-5xl sm:text-6xl md:text-8xl tracking-wide mb-4 animate-flicker">
+                    JOSEPH MARSHALL
+                </h1>
+                <p class="text-lg md:text-xl text-vu-amber font-mono tracking-wide mb-8">
+                    AUDIO POST-PRODUCTION SPECIALIST &nbsp;·&nbsp; GAME AUDIO &nbsp;·&nbsp; SOUND ENGINEER &nbsp;·&nbsp; COMPOSER
+                </p>
+                <p class="text-base md:text-lg text-tape-cream-dim max-w-2xl mx-auto mb-12 leading-relaxed">
+                    Audio Production and Music Technology graduate from the University of Chichester, specialising in
+                    post-production, game audio, and composition — shaping emotion and atmosphere through sound.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#work" class="px-8 py-3 btn-amber rounded-none">
+                        View Reel
+                    </a>
+                    <a href="cv.pdf" class="px-8 py-3 btn-outline rounded-none">
+                        Download CV
+                    </a>
+                </div>
+
+                <div class="mt-12 flex justify-center space-x-6 text-xl">
+                    <a href="mailto:JMMarshall.Audio@proton.me" class="hover:text-vu-amber transition" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                    <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="hover:text-vu-amber transition" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <!-- Not currently in use — uncomment and add a real profile URL once available.
+                    <a href="[IMDb URL]" class="hover:text-vu-amber transition" aria-label="IMDb"><i class="fab fa-imdb"></i></a>
+                    -->
+                    <!-- Not currently in use — uncomment and add a real channel URL once available (Vimeo, YouTube, or SoundCloud).
+                    <a href="[Vimeo/YouTube/SoundCloud URL]" class="hover:text-vu-amber transition" aria-label="Reel"><i class="fab fa-vimeo-v"></i></a>
+                    -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Video controls — deliberately absolute (not fixed), so they scroll away with the hero rather than hovering over the whole page -->
+        <div class="absolute bottom-6 right-6 z-20 flex gap-2">
+            <button id="unmuteBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Toggle sound">
+                <i class="fas fa-volume-xmark text-vu-amber" id="unmuteIcon"></i>
+            </button>
+            <button id="fullscreenBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Watch fullscreen">
+                <i class="fas fa-expand text-vu-amber"></i>
+            </button>
+        </div>
+
+        <!-- Ambient waveform, fixed to hero — also acts as the video's visual cutoff at the bottom edge -->
+        <svg class="absolute bottom-0 left-0 w-full h-28 opacity-30 pointer-events-none z-[5]" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <g fill="none" stroke="#e8a33d" stroke-width="2">
+                <path d="M0,60 L20,40 L40,80 L60,30 L80,90 L100,50 L120,70 L140,20 L160,95 L180,45 L200,60 L220,35 L240,85 L260,55 L280,65 L300,25 L320,90 L340,50 L360,70 L380,40 L400,60 L420,30 L440,85 L460,55 L480,65 L500,40 L520,80 L540,30 L560,90 L580,50 L600,70 L620,35 L640,85 L660,55 L680,20 L700,95 L720,45 L740,60 L760,35 L780,85 L800,55 L820,65 L840,25 L860,90 L880,50 L900,70 L920,40 L940,60 L960,30 L980,85 L1000,55 L1020,65 L1040,40 L1060,80 L1080,30 L1100,90 L1120,50 L1140,70 L1160,35 L1180,85 L1200,60" opacity="0.8"/>
+            </g>
+        </svg>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="py-24 relative">
+        <div class="container mx-auto px-6">
+
+            <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
+                <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 01</div>
+                <svg class="flex-1 h-7 min-w-0" viewBox="0 0 400 30" preserveAspectRatio="none">
+                    <!-- boom pole -->
+                    <line x1="0" y1="15" x2="272" y2="15" stroke="#8a6a34" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                    <!-- shotgun mic body, visible at the rear before the windscreen -->
+                    <rect x="270" y="12" width="22" height="6" rx="1.5" fill="#201e1a" stroke="#3a372f" stroke-width="0.5"/>
+                    <!-- fuzzy windscreen ("dead cat"): jagged fur silhouette, not a smooth capsule -->
+                    <path d="M 292,6 L 300,2 L 308,6 L 316,2 L 324,6 L 332,2 L 340,6 L 348,2 L 356,6 L 364,2 L 372,6 L 380,2 L 388,6 A 8,10 0 0 1 396,24 L 388,28 L 380,24 L 372,28 L 364,24 L 356,28 L 348,24 L 340,28 L 332,24 L 324,28 L 316,24 L 308,28 L 300,24 A 8,10 0 0 1 292,6 Z"
+                        fill="#e8a33d"/>
+                </svg>
+                <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">ABOUT</h2>
+            </div>
+
+            <div class="max-w-5xl mx-auto grid md:grid-cols-5 gap-12 items-start">
+                <div class="md:col-span-3 space-y-6">
+                    <p class="text-tape-cream-dim leading-relaxed">
+                        Hi, I'm Joseph Marshall, an Audio Production and Music Technology graduate from 
+                        the University of Chichester, having completed a BA (Hons) with Upper Second-Class
+                        Honours (2:1). During my studies, I developed a particular interest in audio 
+                        post-production and video game audio, whilst also enjoying opportunities to work 
+                        across a range of audio disciplines. Outside of university, I've always enjoyed 
+                        exploring audio beyond the classroom, from acoustics and instrument design to 
+                        experimenting with different forms of media production. I'm naturally curious 
+                        about the way sound works and enjoy learning about new techniques, technologies, 
+                        and creative approaches.
+                    </p>
+                    <p class="text-tape-cream-dim leading-relaxed">
+                        I've always been fascinated by sound and naturally find myself exploring the
+                        questions and ideas it raises. What has always drawn me most to audio is its
+                        ability to immerse an audience and completely transform visual media. Whether it's
+                        a carefully mixed piece of music, impactful sound design, or convincing spatial
+                        audio, I'm fascinated by how the right sound can shape emotion, atmosphere, and
+                        storytelling. Creating that level of immersion is what I find most rewarding.
+                    </p>
+                </div>
+
+                <!-- Quick facts strip, replacing Aurora's inflated stat counters -->
+                <div class="md:col-span-2 space-y-3">
+                    <div class="sprocket-card p-4 flex justify-between items-center">
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Location</span>
+                        <span class="font-mono text-sm text-vu-amber">Buckinghamshire, UK</span>
+                    </div>
+                    <div class="sprocket-card p-4 flex justify-between items-center">
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Primary DAW</span>
+                        <span class="font-mono text-sm text-vu-amber">Avid Pro Tools</span>
+                    </div>
+                    <div class="sprocket-card p-4 flex justify-between items-center">
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Primary Focus</span>
+                        <span class="font-mono text-sm text-vu-amber text-right">Post-Production, Game Audio &amp; Composition</span>
+                    </div>
+                    <div class="sprocket-card p-4 flex justify-between items-center">
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Availability</span>
+                        <span class="font-mono text-sm text-vu-amber text-right">Open to Graduate &amp; Freelance Work</span>
+                    </div>
+                    <div class="sprocket-card p-4 flex justify-between items-center">
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Status</span>
+                        <span class="font-mono text-sm text-vu-amber">Audio Production Graduate</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ WORK / SHOWCASE ============ -->
+    <section id="work" class="py-24 bg-reel-card/30">
+        <div class="container mx-auto px-6">
+
+            <div class="flex flex-wrap items-center gap-4 mb-8 max-w-5xl mx-auto">
+                <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 02</div>
+                <div class="pattern-fader-track flex-1">
+                    <div class="track-rail"></div>
+                    <div class="fader-cap" style="left:58%"></div>
+                </div>
+                <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">WORK</h2>
+            </div>
+
+            <p class="max-w-6xl mx-auto text-tape-cream-dim text-sm mb-8">
+                A collection of projects spanning audio post-production, game audio, composition, recording, and sound design. Filter by category, or explore the full portfolio.
+            </p>
+
+            <!-- Filter bar -->
+            <div class="max-w-6xl mx-auto flex flex-wrap gap-2 mb-10" id="filterBar">
+                <button class="filter-btn is-active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="studio">Studio &amp; Sound Design</button>
+                <button class="filter-btn" data-filter="post">Post Production</button>
+                <button class="filter-btn" data-filter="foley">Foley &amp; ADR</button>
+                <button class="filter-btn" data-filter="live">Live Sound</button>
+                <button class="filter-btn" data-filter="sports">Sports Broadcasting</button>
+                <button class="filter-btn" data-filter="composition">Composition &amp; Scoring</button>
+                <button class="filter-btn" data-filter="field">Field Recording</button>
+            </div>
+
+            <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8" id="showcaseGrid">
+
+                <!-- Card: Studio / Dialogue & Sound Design (video) -->
+                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="studio">
+                    <div class="sprocket-strip"></div>
+                    <!--
+                        To embed a real video, replace the placeholder div below with, e.g.:
+                        <div class="aspect-video w-full">
+                            <iframe class="w-full h-full" src="https://www.youtube.com/embed/VIDEO_ID"
+                                title="[Title]" frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen></iframe>
+                        </div>
+                        (Vimeo: src="https://player.vimeo.com/video/VIDEO_ID")
+                    -->
+                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
+                        <i class="fas fa-waveform-lines text-3xl"></i>
+                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
+                    </div>
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6">
+                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №001</div>
+                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Studio &amp; Sound Design</span>
+                        <h3 class="text-lg font-semibold mb-2">[Short Film Title]</h3>
+                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. dialogue edit &amp; sound design for a 12-minute drama short.]</p>
+                    </div>
+                </article>
+
+                <!-- Card: Post Production (video) -->
+                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="post">
+                    <div class="sprocket-strip"></div>
+                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
+                        <i class="fas fa-clapperboard text-3xl"></i>
+                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
+                    </div>
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6">
+                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №002</div>
+                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Post Production</span>
+                        <h3 class="text-lg font-semibold mb-2">[Documentary / Broadcast Title]</h3>
+                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. full post mix for a student documentary, conform through to final delivery.]</p>
+                    </div>
+                </article>
+
+                <!-- Card: Foley & ADR (video) -->
+                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="foley">
+                    <div class="sprocket-strip"></div>
+                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
+                        <i class="fas fa-shoe-prints text-3xl"></i>
+                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
+                    </div>
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6">
+                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №003</div>
+                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Foley &amp; ADR</span>
+                        <h3 class="text-lg font-semibold mb-2">[Foley / ADR Session Title]</h3>
+                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. Foley recording and ADR session for a short animation.]</p>
+                    </div>
+                </article>
+
+                <!-- Card: Live Sound (video) -->
+                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="live">
+                    <div class="sprocket-strip"></div>
+                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
+                        <i class="fas fa-sliders text-3xl"></i>
+                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
+                    </div>
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6">
+                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №004</div>
+                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Live Sound</span>
+                        <h3 class="text-lg font-semibold mb-2">[Live Event / Venue]</h3>
+                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. FOH or monitor engineering for a live event or venue.]</p>
+                    </div>
+                </article>
+
+                <!-- Card: Sports Broadcasting (video) -->
+                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="sports">
+                    <div class="sprocket-strip"></div>
+                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
+                        <i class="fas fa-tower-broadcast text-3xl"></i>
+                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
+                    </div>
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6">
+                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №005</div>
+                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Sports Broadcasting</span>
+                        <h3 class="text-lg font-semibold mb-2">[Broadcast / OB Title]</h3>
+                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. audio assist on an outside broadcast or sports coverage.]</p>
+                    </div>
+                </article>
+
+                <!-- Card: Composition & Scoring (audio) -->
+                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="composition">
+                    <div class="sprocket-strip"></div>
+                    <!--
+                        To embed real audio, replace the placeholder div below with, e.g.:
+                        <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
+                            src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/TRACK_ID&color=%23e8a33d&auto_play=false&show_user=true">
+                        </iframe>
+                    -->
+                    <div class="w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim py-10">
+                        <i class="fas fa-music text-3xl"></i>
+                        <span class="font-mono text-xs uppercase tracking-widest">Embed audio here</span>
+                    </div>
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6">
+                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №006</div>
+                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Composition &amp; Scoring</span>
+                        <h3 class="text-lg font-semibold mb-2">[Original Score / Composition]</h3>
+                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. original score composed and mixed for a short animation.]</p>
+                    </div>
+                </article>
+
+                <!-- Card: Field Recording (audio) -->
+                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="field">
+                    <div class="sprocket-strip"></div>
+                    <div class="w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim py-10">
+                        <i class="fas fa-tree text-3xl"></i>
+                        <span class="font-mono text-xs uppercase tracking-widest">Embed audio here</span>
+                    </div>
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6">
+                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №007</div>
+                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Field Recording</span>
+                        <h3 class="text-lg font-semibold mb-2">[Location Recording Title]</h3>
+                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. location sound recording of ambience/atmos for a documentary.]</p>
+                    </div>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+<!-- ============ SKILLS ============ -->
+<section id="skills" class="py-24">
+    <div class="container mx-auto px-6">
+
+        <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
+            <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 03</div>
+            <div class="bar-row meter flex-1">
+                <span style="height:4px"></span>
+                <span style="height:7px"></span>
+                <span style="height:10px"></span>
+                <span style="height:13px"></span>
+                <span style="height:16px"></span>
+                <span style="height:13px"></span>
+                <span style="height:10px"></span>
+                <span style="height:7px"></span>
+                <span style="height:4px"></span>
+                <span style="height:7px"></span>
+                <span style="height:10px"></span>
+                <span style="height:13px"></span>
+                <span style="height:16px"></span>
+                <span style="height:13px"></span>
+                <span style="height:10px"></span>
+                <span style="height:7px"></span>
+                <span style="height:4px"></span>
+            </div>
+            <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">SKILLS</h2>
+        </div>
+
+
+        <div class="max-w-5xl mx-auto space-y-12">
+
+            <!-- Technical Skills & Tools -->
+            <div>
+                <h3 class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-5">
+                    Technical Skills &amp; Tools
+                </h3>
+
+
+                <!-- Three column layout -->
+                <div class="grid lg:grid-cols-3 gap-x-10 gap-y-10">
+
+
+                    <!-- COLUMN 1 -->
+                    <div class="space-y-8">
+
+
+                        <!-- DAWs -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">DAWs</p>
+
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Avid Pro Tools</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Logic Pro</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>MuseScore</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <!-- Audio Restoration -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">
+                                Audio Restoration
+                            </p>
+
+                            <div class="space-y-2">
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>iZotope RX Advanced</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>ERA 5 Bundle</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Dialogue Restoration</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Dialogue Isolate</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Spectral Repair</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Noise Reduction</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Audio Cleanup</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+
+                        <!-- Picture & Post Workflow -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">
+                                Picture &amp; Post Workflow
+                            </p>
+
+                            <div class="space-y-2">
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Pro Tools Video Engine</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>DaVinci Resolve</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Video Editing &amp; Export</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Video Export &amp; Delivery Formats</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                                        <!-- COLUMN 2 -->
+                    <div class="space-y-8">
+
+
+                        <!-- Game Audio -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">
+                                Game Audio
+                            </p>
+
+                            <div class="space-y-2">
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Audiokinetic Wwise</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Interactive Audio Implementation</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Game Audio Middleware</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Kontakt Script Processor (KSP)</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Field Recording -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">
+                                Field Recording
+                            </p>
+
+                            <div class="space-y-2">
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Zoom H5</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Zoom H6</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Sound Devices 688</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Sound Devices 422</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Sennheiser MKH 416</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>AKG C480</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Boom Operation</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Location Sound Recording</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Foley Recording</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Ambient &amp; Environmental Recording</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Nature Recording</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Custom Sound Effects</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                                        <!-- COLUMN 3 -->
+                    <div class="space-y-8">
+
+
+                        <!-- Live Audio -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">
+                                Live Audio
+                            </p>
+
+                            <div class="space-y-2">
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Behringer X-Series Consoles</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Allen &amp; Heath Digital Mixing Systems</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Digital Console Operation</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Signal Routing &amp; Patch Management</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Live Mixing &amp; Monitoring</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Multitrack Live Recording</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+
+
+                        <!-- Plugins -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">
+                                Plugins
+                            </p>
+
+                            <div class="space-y-2">
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>FabFilter</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>iZotope RX &amp; Ozone</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Soundtoys</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Valhalla DSP</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Melodyne</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Analogue Obsession</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Pro Tools Stock Plugins</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Logic Pro Stock Plugins</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+
+
+                        <!-- Virtual Instruments -->
+                        <div>
+                            <p class="font-mono text-xs text-tape-cream-dim uppercase mb-3">
+                                Virtual Instruments
+                            </p>
+
+                            <div class="space-y-2">
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Kontakt</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>BBC Symphony Orchestra</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Spitfire Audio</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>LABS</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Vital</span>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-square-check text-vu-amber"></i>
+                                    <span>Serum</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+
+            <!-- Core Post-Production Skills -->
+            <div class="mt-12">
+
+                <h3 class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-5">
+                    Core Post-Production Skills
+                </h3>
+
+                <div class="flex flex-wrap gap-2">
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Dialogue Editing
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        ADR Editing
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Foley Editing
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Sound Design
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Ambience Creation
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Audio Restoration
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Audio Synchronisation to Picture
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Audio Conforming
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Stereo Mixing
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        5.1 Surround Mixing
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Broadcast Loudness (LUFS / EBU R128)
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Audio Delivery &amp; Quality Control
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Working to Timecode
+                    </span>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+</section>
+
+    <!-- ============ REFERENCES ============ -->
+<section id="references" class="py-24">
+    <div class="container mx-auto px-6">
+
+        <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
+            <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 04</div>
+
+            <span class="text-vu-amber leading-none flex-shrink-0" style="font-family: Georgia, 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols', serif; font-size: 2.25rem;">&#x1D11E;</span>
+
+            <svg class="flex-1 h-6 min-w-0" viewBox="0 0 400 24" preserveAspectRatio="none">
+                <g stroke="#3a372f" stroke-width="1">
+                    <line x1="0" y1="2" x2="400" y2="2"/>
+                    <line x1="0" y1="7" x2="400" y2="7"/>
+                    <line x1="0" y1="12" x2="400" y2="12"/>
+                    <line x1="0" y1="17" x2="400" y2="17"/>
+                    <line x1="0" y1="22" x2="400" y2="22"/>
+                </g>
+            </svg>
+
+            <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">REFERENCES</h2>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+            <div class="sprocket-card p-6 flex items-center justify-between">
+                <p class="text-tape-cream-dim text-lg">
+                    Professional references available upon request.
+                </p>
+
+                <a href="mailto:JMMarshall.Audio@proton.me" 
+                   class="text-tape-cream-dim hover:text-vu-amber transition text-xl"
+                   aria-label="Email">
+                    <i class="fas fa-envelope"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+    <!-- ============ EDUCATION ============ -->
+    <section id="education" class="py-24 bg-reel-card/30">
+        <div class="container mx-auto px-6">
+
+            <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
+                <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 05</div>
+                <svg class="flex-1 h-6 min-w-0" viewBox="0 0 400 24" preserveAspectRatio="none">
+                    <!-- 8-bit / chiptune square wave — game audio -->
+                    <path d="M0,18 H40 V6 H80 V18 H120 V6 H160 V18 H200 V6 H240 V18 H280 V6 H320 V18 H360 V6 H400 V18"
+                        fill="none" stroke="#e8a33d" stroke-width="3" stroke-linecap="square" vector-effect="non-scaling-stroke"/>
+                </svg>
+                <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">EDUCATION</h2>
+            </div>
+
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="sprocket-card p-6">
+                    <div class="flex flex-wrap justify-between items-start gap-2 mb-4">
+                        <div>
+                            <h3 class="font-semibold text-vu-amber">BA (Hons) Audio Production and Music Technologies</h3>
+                            <p class="text-tape-cream-dim text-sm">University of Chichester</p>
+                        </div>
+                        <span class="font-mono text-xs text-tape-cream-dim whitespace-nowrap">2023 — 2026</span>
+                    </div>
+                    <p class="font-mono text-xs text-tape-cream-dim mb-4">Classification: Upper Second-Class Honours (2:1)</p>
+                    <p class="text-tape-cream-dim text-sm leading-relaxed mb-5">
+                        A practical and technical programme covering audio production, post-production, 
+                        recording, composition, and interactive audio. Throughout my studies, I developed 
+                        experience with industry workflows including dialogue editing, sound design, 
+                        mixing, field recording, and game audio implementation, working with 
+                        industry-standard software and hardware.
+                    </p>
+                    <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-3">Highlights</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Audio Post-Production &amp; Sound Design</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Dialogue Editing, ADR &amp; Foley</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Stereo &amp; 5.1 Surround Mixing</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Field Recording &amp; Sound Library Creation</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Interactive Audio Implementation (Wwise)</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Media Composition &amp; Scoring</span>
+                    </div>
+                </div>
+
+                <div class="sprocket-card p-6">
+                    <div class="flex flex-wrap justify-between items-start gap-2 mb-3">
+                        <h3 class="font-semibold text-vu-amber">A Levels</h3>
+                        <span class="font-mono text-xs text-tape-cream-dim whitespace-nowrap">2021 — 2023</span>
+                    </div>
+                    <p class="text-tape-cream-dim text-sm mb-3">Pinner High School</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Biology — B</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Chemistry — C</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Music — C</span>
+                        <span class="px-3 py-1.5 border border-reel-border text-sm">Physical Education — C</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ CONTACT ============ -->
+<section id="contact" class="py-24">
+    <div class="container mx-auto px-6">
+
+        <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
+            <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 06</div>
+            <div class="slate-stripe flex-1"></div>
+            <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">CONTACT</h2>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+
+            <p class="text-tape-cream-dim leading-relaxed mb-10 max-w-2xl">
+                I'm always open to discussing graduate opportunities, collaborations, and freelance audio projects. Feel free to get in touch via email, LinkedIn, or the contact form below.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+
+                <div class="space-y-5">
+
+                    <!-- Email -->
+                    <a href="mailto:JMMarshall.Audio@proton.me" class="block group">
+                        <div class="sprocket-card p-5 flex items-center space-x-4 hover:border-vu-amber transition">
+                            <div class="w-11 h-11 border border-vu-amber flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-envelope text-vu-amber"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-tape-cream-dim font-mono uppercase">Email</p>
+                                <p class="group-hover:text-vu-amber transition">
+                                    JMMarshall.Audio@proton.me
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+
+
+                    <!-- LinkedIn -->
+                    <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="block group">
+                        <div class="sprocket-card p-5 flex items-center space-x-4 hover:border-vu-amber transition">
+                            <div class="w-11 h-11 border border-vu-amber flex items-center justify-center flex-shrink-0">
+                                <i class="fab fa-linkedin text-vu-amber"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-tape-cream-dim font-mono uppercase">LinkedIn</p>
+                                <p class="group-hover:text-vu-amber transition">
+                                    View LinkedIn Profile
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+
+
+                    <!-- Location -->
+                    <div class="sprocket-card p-5 flex items-center space-x-4">
+                        <div class="w-11 h-11 border border-vu-amber flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-location-dot text-vu-amber"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-tape-cream-dim font-mono uppercase">Location</p>
+                            <p>Buckinghamshire, United Kingdom</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                    <!-- Formspree contact form (submitted via fetch so we can show inline success/error states) -->
+                    <div>
+                        <form id="contactForm" action="https://formspree.io/f/mdaqgqll" method="POST" class="space-y-4">
+                            <input type="text" name="name" placeholder="Your Name" required class="w-full px-4 py-3 bg-stage-black border border-reel-border focus:outline-none focus:border-vu-amber">
+                            <input type="email" name="email" placeholder="Your Email" required class="w-full px-4 py-3 bg-stage-black border border-reel-border focus:outline-none focus:border-vu-amber">
+                            <textarea name="message" placeholder="Your Message" rows="4" required class="w-full px-4 py-3 bg-stage-black border border-reel-border focus:outline-none focus:border-vu-amber"></textarea>
+                            <button type="submit" class="w-full px-8 py-3 btn-amber">
+                                Send Message
+                            </button>
+                        </form>
+                        <p id="contactSuccess" class="hidden mt-4 text-sm font-mono text-vu-amber">Message sent — thank you, I'll get back to you soon.</p>
+                        <p id="contactError" class="hidden mt-4 text-sm font-mono text-rec-red">Something went wrong sending that — please try again, or email me directly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 border-t border-reel-border">
+        <div class="container mx-auto px-6 text-center">
+            <div class="mb-4 text-lg">
+                <a href="mailto:JMMarshall.Audio@proton.me" class="mx-2 hover:text-vu-amber transition"><i class="fas fa-envelope"></i></a>
+                <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="mx-2 hover:text-vu-amber transition"><i class="fab fa-linkedin"></i></a>
+                <!-- Not currently in use — uncomment once available.
+                <a href="[IMDb URL]" class="mx-2 hover:text-vu-amber transition"><i class="fab fa-imdb"></i></a>
+                <a href="[Vimeo/YouTube/SoundCloud URL]" class="mx-2 hover:text-vu-amber transition"><i class="fab fa-vimeo-v"></i></a>
+                -->
+            </div>
+            <p class="text-tape-cream-dim text-xs font-mono">
+                © 2026 JOSEPH MARSHALL
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Contact form — submit via fetch so we can show an inline
+        // success/error message instead of navigating away.
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            const successEl = document.getElementById('contactSuccess');
+            const errorEl = document.getElementById('contactError');
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                successEl.classList.add('hidden');
+                errorEl.classList.add('hidden');
+                const submitBtn = contactForm.querySelector('button[type="submit"]');
+                const originalLabel = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending…';
+                try {
+                    const response = await fetch(contactForm.action, {
+                        method: 'POST',
+                        body: new FormData(contactForm),
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (response.ok) {
+                        contactForm.reset();
+                        successEl.classList.remove('hidden');
+                    } else {
+                        errorEl.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    errorEl.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalLabel;
+                }
+            });
+        }
+
+        // Hero background video controls
+        const heroVideo = document.getElementById('heroVideo');
+        const unmuteBtn = document.getElementById('unmuteBtn');
+        const unmuteIcon = document.getElementById('unmuteIcon');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        if (heroVideo) {
+            // Unmute / mute toggle
+            if (unmuteBtn) {
+                unmuteBtn.addEventListener('click', () => {
+                    heroVideo.muted = !heroVideo.muted;
+                    unmuteIcon.classList.toggle('fa-volume-xmark', heroVideo.muted);
+                    unmuteIcon.classList.toggle('fa-volume-high', !heroVideo.muted);
+                });
+            }
+
+            // Fullscreen — native browser fullscreen on the <video> element itself
+            // hides everything else and plays just the video. We add the
+            // 'controls' attribute right before entering so seek/restart
+            // controls appear, then remove it again on exit so the
+            // background loop stays clean/control-free.
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                    heroVideo.setAttribute('controls', '');
+                    const request = heroVideo.requestFullscreen
+                        ? heroVideo.requestFullscreen()
+                        : (heroVideo.webkitRequestFullscreen ? heroVideo.webkitRequestFullscreen() : null);
+                    if (request && request.catch) {
+                        request.catch(() => {
+                            // Fullscreen API unavailable/blocked — iOS Safari falls
+                            // back to its own native fullscreen video player here.
+                            if (heroVideo.webkitEnterFullscreen) heroVideo.webkitEnterFullscreen();
+                        });
+                    } else if (!heroVideo.requestFullscreen && heroVideo.webkitEnterFullscreen) {
+                        heroVideo.webkitEnterFullscreen();
+                    }
+                });
+            }
+            const exitFullscreenCleanup = () => {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    heroVideo.removeAttribute('controls');
+                }
+            };
+            document.addEventListener('fullscreenchange', exitFullscreenCleanup);
+            document.addEventListener('webkitfullscreenchange', exitFullscreenCleanup);
+
+            // Auto-pause when scrolled out of view, resume when back in view
+            if ('IntersectionObserver' in window) {
+                const videoObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            heroVideo.play().catch(() => {});
+                        } else {
+                            heroVideo.pause();
+                        }
+                    });
+                }, { threshold: 0.1 });
+                videoObserver.observe(heroVideo);
+            }
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        }
+        document.querySelectorAll('#mobileMenu a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('mobileMenu').classList.add('hidden');
+            });
+        });
+
+        // Note: the earlier scroll-triggered fade-in was removed. Content is
+        // simply visible by default now — no JS/scroll dependency to break.
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Work section category filter — user-triggered by click, so there's
+        // no scroll-timing or observer dependency; "all" cards show by default.
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                const filter = btn.dataset.filter;
+                document.querySelectorAll('.showcase-card').forEach(card => {
+                    const show = filter === 'all' || card.dataset.category === filter;
+                    card.style.display = show ? '' : 'none';
+                });
+            });
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Live 25fps timecode counter
+        (function () {
+            const el = document.getElementById('timecode');
+            if (!el || reduceMotion) return;
+            const fps = 25;
+            const start = Date.now();
+            function pad(n, len) { return String(n).padStart(len, '0'); }
+            function tick() {
+                const elapsedFrames = Math.floor((Date.now() - start) / (1000 / fps));
+                const totalSeconds = Math.floor(elapsedFrames / fps);
+                const frames = elapsedFrames % fps;
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                el.textContent = `${pad(hours,2)}:${pad(minutes,2)}:${pad(seconds,2)}:${pad(frames,2)}`;
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        })();
+    </script>
+</body>
+</html>
