@@ -133,24 +133,85 @@
         /* Fader on a horizontal track (Work divider) */
         .pattern-fader-track {
             position: relative;
-            height: 16px;
+            height: 20px;
         }
+
         .pattern-fader-track .track-rail {
             position: absolute;
             left: 0;
             right: 0;
             top: 50%;
-            height: 2px;
-            background: #2b2925;
+            height: 3px;
+            background: #24221f;
             transform: translateY(-50%);
+            box-shadow:
+                inset 0 1px 1px rgba(255,255,255,0.08),
+                0 1px 2px rgba(0,0,0,0.5);
         }
+
         .pattern-fader-track .fader-cap {
             position: absolute;
-            top: 0;
-            width: 10px;
-            height: 100%;
-            background: #e8a33d;
-            border: 1px solid #0c0c0b;
+            top: 50%;
+            width: 14px;
+            height: 32px;
+            transform: translateY(-50%);
+
+            background: linear-gradient(
+                to right,
+                #c87918 0%,
+                #efb451 45%,
+                #d88d25 100%
+            );
+
+            border: 1px solid #0a0908;
+            border-radius: 3px;
+
+            clip-path: polygon(
+                12% 0,
+                88% 0,
+                100% 12%,
+                100% 88%,
+                88% 100%,
+                12% 100%,
+                0 88%,
+                0 12%
+            );
+
+            box-shadow:
+                inset 1px 1px 1px rgba(255,255,255,0.22),
+                inset -2px -2px 3px rgba(0,0,0,0.35),
+                0 2px 5px rgba(0,0,0,0.55);
+        }
+
+        .pattern-fader-track .fader-cap::before {
+            content: "";
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 50%;
+            width: 4px;
+            transform: translateX(-50%);
+
+            background: linear-gradient(
+                to right,
+                rgba(0,0,0,0.45),
+                rgba(0,0,0,0.15),
+                rgba(255,255,255,0.18)
+            );
+
+            border-radius: 2px;
+        }
+
+        .pattern-fader-track .fader-cap::after {
+            content: "";
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            bottom: 3px;
+            height: 2px;
+
+            background: rgba(0,0,0,0.35);
+            border-radius: 1px;
         }
 
         /* ---------- Timecode ---------- */
@@ -305,7 +366,7 @@
                 <!-- Timecode readout -->
                 <div class="flex items-center justify-center gap-3 mb-8 font-mono text-vu-amber text-sm">
                     <span class="rec-dot animate-blink"></span>
-                    <span>REC</span>
+                    <span>TC</span>
                     <span id="timecode" class="timecode-display">00:00:00:00</span>
                     <span class="text-tape-cream-dim">25fps</span>
                 </div>
@@ -368,14 +429,111 @@
             <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
                 <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 01</div>
                 <svg class="flex-1 h-7 min-w-0" viewBox="0 0 400 30" preserveAspectRatio="none">
-                    <!-- boom pole -->
-                    <line x1="0" y1="15" x2="272" y2="15" stroke="#8a6a34" stroke-width="3" vector-effect="non-scaling-stroke"/>
-                    <!-- shotgun mic body, visible at the rear before the windscreen -->
-                    <rect x="270" y="12" width="22" height="6" rx="1.5" fill="#201e1a" stroke="#3a372f" stroke-width="0.5"/>
-                    <!-- fuzzy windscreen ("dead cat"): jagged fur silhouette, not a smooth capsule -->
-                    <path d="M 292,6 L 300,2 L 308,6 L 316,2 L 324,6 L 332,2 L 340,6 L 348,2 L 356,6 L 364,2 L 372,6 L 380,2 L 388,6 A 8,10 0 0 1 396,24 L 388,28 L 380,24 L 372,28 L 364,24 L 356,28 L 348,24 L 340,28 L 332,24 L 324,28 L 316,24 L 308,28 L 300,24 A 8,10 0 0 1 292,6 Z"
-                        fill="#e8a33d"/>
-                </svg>
+
+            <!-- Boom pole shadow -->
+            <line x1="0" y1="16" x2="268" y2="16"
+                  stroke="#4b3a22"
+                  stroke-width="3"
+                  vector-effect="non-scaling-stroke"/>
+
+            <!-- Boom pole highlight -->
+            <line x1="0" y1="14.8" x2="268" y2="14.8"
+                  stroke="#b7924f"
+                  stroke-width="1"
+                  vector-effect="non-scaling-stroke"/>
+
+            <!-- Telescopic locking collars -->
+            <rect x="58" y="11.5" width="3" height="8" fill="#272521"/>
+            <rect x="116" y="11.5" width="3" height="8" fill="#272521"/>
+            <rect x="174" y="11.5" width="3" height="8" fill="#272521"/>
+            <rect x="232" y="11.5" width="3" height="8" fill="#272521"/>
+
+            <!-- Shock mount -->
+            <line x1="268" y1="15" x2="274" y2="11"
+                  stroke="#666"
+                  stroke-width="1"/>
+
+            <line x1="268" y1="15" x2="274" y2="19"
+                  stroke="#666"
+                  stroke-width="1"/>
+
+            <!-- Shotgun microphone -->
+            <rect x="274"
+                  y="11"
+                  width="24"
+                  height="8"
+                  rx="3"
+                  fill="#242320"
+                  stroke="#555"
+                  stroke-width="0.6"/>
+
+            <!-- Rear cap -->
+            <circle cx="276" cy="15"
+                    r="2.1"
+                    fill="#181818"/>
+
+            <!-- Dead cat (outer fur) -->
+            <path d="
+                M298,7
+                L305,3
+                L312,7
+                L319,3
+                L326,7
+                L333,3
+                L340,7
+                L347,3
+                L354,7
+                L361,3
+                L368,7
+                L375,3
+                L382,7
+                A10,9 0 0 1 395,23
+                L388,27
+                L381,23
+                L374,27
+                L367,23
+                L360,27
+                L353,23
+                L346,27
+                L339,23
+                L332,27
+                L325,23
+                L318,27
+                L311,23
+                L304,27
+                A10,9 0 0 1 298,7 Z"
+                fill="#c98a2c"/>
+
+            <!-- Dead cat highlight -->
+            <path d="
+                M304,9
+                L311,6
+                L318,9
+                L325,6
+                L332,9
+                L339,6
+                L346,9
+                L353,6
+                L360,9
+                L367,6
+                L374,9
+                L381,6
+                A8,6 0 0 1 388,21
+                L381,18
+                L374,21
+                L367,18
+                L360,21
+                L353,18
+                L346,21
+                L339,18
+                L332,21
+                L325,18
+                L318,21
+                L311,18
+                A8,6 0 0 1 304,9 Z"
+                fill="#e8a33d"/>
+
+        </svg>  
                 <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">ABOUT</h2>
             </div>
 
@@ -1265,10 +1423,18 @@
             <div class="mb-4 text-lg">
                 <a href="mailto:JMMarshall.Audio@proton.me" class="mx-2 hover:text-vu-amber transition"><i class="fas fa-envelope"></i></a>
                 <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="mx-2 hover:text-vu-amber transition"><i class="fab fa-linkedin"></i></a>
-                <!-- Not currently in use — uncomment once available.
-                <a href="[IMDb URL]" class="mx-2 hover:text-vu-amber transition"><i class="fab fa-imdb"></i></a>
-                <a href="[Vimeo/YouTube/SoundCloud URL]" class="mx-2 hover:text-vu-amber transition"><i class="fab fa-vimeo-v"></i></a>
+                <!-- SoundCloud
+                <a href="https://soundcloud.com/jmmarshall-audio" target="_blank" rel="noopener" class="mx-2 hover:text-vu-amber transition">
+                    <i class="fab fa-soundcloud"></i>
+                </a>
                 -->
+
+                <!-- Vimeo
+                <a href="https://vimeo.com/user261671415" target="_blank" rel="noopener" class="mx-2 hover:text-vu-amber transition">
+                    <i class="fab fa-vimeo-v"></i>
+                </a>
+                -->
+                
             </div>
             <p class="text-tape-cream-dim text-xs font-mono">
                 © 2026 JOSEPH MARSHALL
