@@ -227,6 +227,39 @@
             box-shadow: 0 0 8px 1px rgba(193,39,45,0.7);
         }
 
+        /* ---------- Hero ended state (glow reveal) ----------
+           Sits behind the dark wash, in front of nothing (video fades to
+           reveal it). Base is the same near-black as the body so there's
+           no visible seam, with a slow, low-amplitude amber glow so the
+           hero doesn't go visually dead once the reel finishes — kept
+           subtle deliberately so it doesn't compete with page content. */
+        .hero-ended-glow {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: #0c0c0b;
+            opacity: 0;
+            transition: opacity 0.7s ease;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .hero-ended-glow.is-visible { opacity: 1; }
+        .hero-ended-glow::before {
+            content: "";
+            position: absolute;
+            inset: -10%;
+            background:
+                radial-gradient(ellipse at top left, rgba(232,163,61,0.22) 0%, transparent 45%),
+                radial-gradient(ellipse at top right, rgba(232,163,61,0.22) 0%, transparent 45%),
+                radial-gradient(ellipse at bottom left, rgba(232,163,61,0.18) 0%, transparent 45%),
+                radial-gradient(ellipse at bottom right, rgba(232,163,61,0.18) 0%, transparent 45%);
+            animation: heroGlowPulse 8s ease-in-out infinite;
+        }
+        @keyframes heroGlowPulse {
+            0%, 100% { opacity: 0.75; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.04); }
+        }
+
         /* ---------- Sprocket perforations on cards ---------- */
         .sprocket-card {
             position: relative;
@@ -309,6 +342,7 @@
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
             .rec-dot, .animate-blink, .animate-flicker { animation: none !important; }
+            .hero-ended-glow::before { animation: none !important; }
             * { transition: none !important; }
         }
     </style>
@@ -348,15 +382,19 @@
 
     <!-- ============ HERO ============ -->
     <section id="home" class="min-h-screen flex items-center justify-center pt-20 relative overflow-hidden">
-        <!-- Background reel video — autoplays muted, sits behind all text.
-             Replace the <source> src below with your actual reel file/path
-             (e.g. "assets/hero-reel.mp4"), and swap the poster for a real
-             first-frame image once you have one. -->
-        <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover z-0"
-            autoplay muted loop playsinline
+        <!-- Background reel video — plays once on load, muted, then fades
+             out to reveal the amber glow layer below. Update the <source>
+             src to match your encoded file's actual path/name, and swap
+             the poster for a real first-frame image once you have one. -->
+        <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-700"
+            autoplay muted playsinline
             poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%230c0c0b'/%3E%3Ctext x='50%25' y='50%25' font-family='monospace' font-size='36' fill='%238a6a34' text-anchor='middle' dominant-baseline='middle'%3EAdd your reel video here%3C/text%3E%3C/svg%3E">
-            <source src="[path to your reel video, e.g. assets/hero-reel.mp4]" type="video/mp4">
+            <source src="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-reel.mp4" type="video/mp4">
         </video>
+
+        <!-- Revealed once the video ends and fades out: black base + animated amber edge glow -->
+        <div id="heroEndedGlow" class="hero-ended-glow"></div>
+
         <!-- Dark wash over the video so hero text stays readable regardless of footage -->
         <div class="absolute inset-0 z-[1] bg-stage-black/60 pointer-events-none"></div>
 
@@ -404,14 +442,22 @@
             </div>
         </div>
 
-        <!-- Video controls — deliberately absolute (not fixed), so they scroll away with the hero rather than hovering over the whole page -->
-        <div class="absolute bottom-6 right-6 z-20 flex gap-2">
-            <button id="unmuteBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Toggle sound">
-                <i class="fas fa-volume-xmark text-vu-amber" id="unmuteIcon"></i>
+        <!-- Video controls — deliberately absolute (not fixed), so they scroll away with the hero
+             rather than hovering over the whole page. Restart stays visible always (even once the
+             video has ended); mute/fullscreen fade out together once the video ends, since neither
+             is meaningful once there's nothing playing. -->
+        <div class="absolute bottom-6 right-6 z-20 flex items-center gap-2">
+            <button id="restartBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Restart video">
+                <i class="fas fa-rotate-left text-vu-amber"></i>
             </button>
-            <button id="fullscreenBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Watch fullscreen">
-                <i class="fas fa-expand text-vu-amber"></i>
-            </button>
+            <div id="videoControls" class="flex items-center gap-2 transition-opacity duration-500">
+                <button id="unmuteBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Toggle sound">
+                    <i class="fas fa-volume-xmark text-vu-amber" id="unmuteIcon"></i>
+                </button>
+                <button id="fullscreenBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Watch fullscreen">
+                    <i class="fas fa-expand text-vu-amber"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Ambient waveform, fixed to hero — also acts as the video's visual cutoff at the bottom edge -->
@@ -1478,27 +1524,64 @@
             });
         }
 
-        // Hero background video controls
+        // ---------- Hero background video controls ----------
+        // Behavior: plays once on load (muted), then fades out on end to
+        // reveal the amber glow layer. Restart button always visible;
+        // mute/fullscreen fade out together once the video ends, since
+        // neither is meaningful with nothing playing. Unmuting/muting
+        // fades video.volume rather than snapping, since the reel can
+        // get loud and a hard cut to full volume is jarring.
         const heroVideo = document.getElementById('heroVideo');
         const unmuteBtn = document.getElementById('unmuteBtn');
         const unmuteIcon = document.getElementById('unmuteIcon');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const videoControls = document.getElementById('videoControls');
+        const heroGlow = document.getElementById('heroEndedGlow');
 
         if (heroVideo) {
-            // Unmute / mute toggle
+            // --- Volume fade helper ---
+            let fadeFrame = null;
+            function fadeVolume(video, from, to, duration, onComplete) {
+                if (fadeFrame) cancelAnimationFrame(fadeFrame);
+                const start = performance.now();
+                function step(now) {
+                    const progress = Math.min((now - start) / duration, 1);
+                    video.volume = from + (to - from) * progress;
+                    if (progress < 1) {
+                        fadeFrame = requestAnimationFrame(step);
+                    } else {
+                        fadeFrame = null;
+                        if (onComplete) onComplete();
+                    }
+                }
+                fadeFrame = requestAnimationFrame(step);
+            }
+
+            // --- Mute / unmute toggle, with volume fade ---
             if (unmuteBtn) {
                 unmuteBtn.addEventListener('click', () => {
-                    heroVideo.muted = !heroVideo.muted;
-                    unmuteIcon.classList.toggle('fa-volume-xmark', heroVideo.muted);
-                    unmuteIcon.classList.toggle('fa-volume-high', !heroVideo.muted);
+                    if (heroVideo.muted) {
+                        // Unmuting: start silent, fade up
+                        heroVideo.volume = 0;
+                        heroVideo.muted = false;
+                        fadeVolume(heroVideo, 0, 1, 600);
+                        unmuteIcon.classList.remove('fa-volume-xmark');
+                        unmuteIcon.classList.add('fa-volume-high');
+                    } else {
+                        // Muting: fade down, then actually mute and reset
+                        // volume so the next unmute fades from a known point
+                        fadeVolume(heroVideo, heroVideo.volume, 0, 400, () => {
+                            heroVideo.muted = true;
+                            heroVideo.volume = 1;
+                        });
+                        unmuteIcon.classList.add('fa-volume-xmark');
+                        unmuteIcon.classList.remove('fa-volume-high');
+                    }
                 });
             }
 
-            // Fullscreen — native browser fullscreen on the <video> element itself
-            // hides everything else and plays just the video. We add the
-            // 'controls' attribute right before entering so seek/restart
-            // controls appear, then remove it again on exit so the
-            // background loop stays clean/control-free.
+            // --- Fullscreen — native browser fullscreen on the <video> ---
             if (fullscreenBtn) {
                 fullscreenBtn.addEventListener('click', () => {
                     heroVideo.setAttribute('controls', '');
@@ -1524,12 +1607,54 @@
             document.addEventListener('fullscreenchange', exitFullscreenCleanup);
             document.addEventListener('webkitfullscreenchange', exitFullscreenCleanup);
 
-            // Auto-pause when scrolled out of view, resume when back in view
+            // --- Ended state: fade video out, reveal glow, hide mute/fullscreen ---
+            function showEndedState() {
+                heroVideo.classList.add('opacity-0');
+                if (videoControls) {
+                    videoControls.classList.add('opacity-0', 'pointer-events-none');
+                }
+                if (heroGlow) heroGlow.classList.add('is-visible');
+            }
+
+            heroVideo.addEventListener('ended', () => {
+                // If someone fullscreened the video and it ends there, bring
+                // them back to the page rather than stranding them on a
+                // frozen last frame with no visible restart control.
+                if (document.fullscreenElement === heroVideo || document.webkitFullscreenElement === heroVideo) {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                }
+                showEndedState();
+            });
+
+            // --- Restart: always available, even once the video has ended ---
+            if (restartBtn) {
+                restartBtn.addEventListener('click', () => {
+                    if (heroGlow) heroGlow.classList.remove('is-visible');
+                    heroVideo.classList.remove('opacity-0');
+                    if (videoControls) {
+                        videoControls.classList.remove('opacity-0', 'pointer-events-none');
+                    }
+                    // Restart always resets to muted/background-safe, rather
+                    // than remembering whatever mute state was left before.
+                    heroVideo.muted = true;
+                    heroVideo.volume = 1;
+                    unmuteIcon.classList.add('fa-volume-xmark');
+                    unmuteIcon.classList.remove('fa-volume-high');
+                    heroVideo.currentTime = 0;
+                    heroVideo.play().catch(() => {});
+                });
+            }
+
+            // --- Auto-pause when scrolled out of view, resume when back in view.
+            //     Never resurrect a video that's already finished — calling
+            //     .play() on an ended video seeks it to 0 and plays automatically
+            //     per spec, which would silently fight the restart-button design. ---
             if ('IntersectionObserver' in window) {
                 const videoObserver = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            heroVideo.play().catch(() => {});
+                            if (!heroVideo.ended) heroVideo.play().catch(() => {});
                         } else {
                             heroVideo.pause();
                         }
