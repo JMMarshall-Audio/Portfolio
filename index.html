@@ -223,8 +223,8 @@
             width: 9px;
             height: 9px;
             border-radius: 9999px;
-            background: #c1272d;
-            box-shadow: 0 0 8px 1px rgba(193,39,45,0.7);
+            background: #5fae9e;
+            box-shadow: 0 0 8px 1px rgba(95,174,158,0.6);
         }
 
         /* ---------- Hero ended state (glow reveal) ----------
@@ -249,15 +249,26 @@
             position: absolute;
             inset: -10%;
             background:
-                radial-gradient(ellipse at top left, rgba(232,163,61,0.22) 0%, transparent 45%),
-                radial-gradient(ellipse at top right, rgba(232,163,61,0.22) 0%, transparent 45%),
-                radial-gradient(ellipse at bottom left, rgba(232,163,61,0.18) 0%, transparent 45%),
-                radial-gradient(ellipse at bottom right, rgba(232,163,61,0.18) 0%, transparent 45%);
-            animation: heroGlowPulse 8s ease-in-out infinite;
+                radial-gradient(ellipse at top left, rgba(232,163,61,0.24) 0%, transparent 45%),
+                radial-gradient(ellipse at bottom right, rgba(232,163,61,0.20) 0%, transparent 45%);
+            animation: heroGlowPulseA 7s ease-in-out infinite;
         }
-        @keyframes heroGlowPulse {
-            0%, 100% { opacity: 0.75; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.04); }
+        .hero-ended-glow::after {
+            content: "";
+            position: absolute;
+            inset: -10%;
+            background:
+                radial-gradient(ellipse at top right, rgba(232,163,61,0.22) 0%, transparent 45%),
+                radial-gradient(ellipse at bottom left, rgba(232,163,61,0.18) 0%, transparent 45%);
+            animation: heroGlowPulseB 9.5s ease-in-out infinite;
+        }
+        @keyframes heroGlowPulseA {
+            0%, 100% { opacity: 0.7; transform: scale(1) translate(0, 0); }
+            50% { opacity: 1; transform: scale(1.07) translate(1%, -1%); }
+        }
+        @keyframes heroGlowPulseB {
+            0%, 100% { opacity: 0.85; transform: scale(1.03) translate(0, 0); }
+            50% { opacity: 0.55; transform: scale(1) translate(-1%, 1%); }
         }
 
         /* ---------- Sprocket perforations on cards ---------- */
@@ -342,7 +353,7 @@
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
             .rec-dot, .animate-blink, .animate-flicker { animation: none !important; }
-            .hero-ended-glow::before { animation: none !important; }
+            .hero-ended-glow::before, .hero-ended-glow::after { animation: none !important; }
             * { transition: none !important; }
         }
     </style>
@@ -399,7 +410,7 @@
         <div class="absolute inset-0 z-[1] bg-stage-black/60 pointer-events-none"></div>
 
         <div class="container mx-auto px-6 z-10 relative">
-            <div class="max-w-4xl mx-auto text-center">
+            <div class="max-w-4xl mx-auto text-center bg-stage-black/50 backdrop-blur-sm rounded-2xl px-6 py-10 sm:px-12 sm:py-14">
 
                 <!-- Timecode readout -->
                 <div class="flex items-center justify-center gap-3 mb-8 font-mono text-vu-amber text-sm">
@@ -422,7 +433,7 @@
 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="#work" class="px-8 py-3 btn-amber rounded-none">
-                        View Reel
+                        View Work
                     </a>
                     <a href="cv.pdf" class="px-8 py-3 btn-outline rounded-none">
                         Download General CV
@@ -447,9 +458,6 @@
              video has ended); mute/fullscreen fade out together once the video ends, since neither
              is meaningful once there's nothing playing. -->
         <div class="absolute bottom-6 right-6 z-20 flex items-center gap-2">
-            <button id="restartBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Restart video">
-                <i class="fas fa-rotate-left text-vu-amber"></i>
-            </button>
             <div id="videoControls" class="flex items-center gap-2 transition-opacity duration-500">
                 <button id="unmuteBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Toggle sound">
                     <i class="fas fa-volume-xmark text-vu-amber" id="unmuteIcon"></i>
@@ -458,6 +466,9 @@
                     <i class="fas fa-expand text-vu-amber"></i>
                 </button>
             </div>
+            <button id="restartBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Restart video">
+                <i class="fas fa-rotate-left text-vu-amber"></i>
+            </button>
         </div>
 
         <!-- Ambient waveform, fixed to hero — also acts as the video's visual cutoff at the bottom edge -->
