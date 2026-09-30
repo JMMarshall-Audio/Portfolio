@@ -77,18 +77,48 @@
             background-color: #0c0c0b;
         }
 
-        /* ---------- Fullscreen video ----------
-           The hero video uses object-fit: cover to fill the page, but once
-           the video element itself goes fullscreen that crop looks wrong on
-           tall phone screens. In fullscreen, contain the frame instead so
-           the native aspect ratio is preserved (letterboxed on black). */
-        video:fullscreen {
-            object-fit: contain;
+        /* ---------- Fullscreen video + ambient fill ----------
+           Fullscreen targets a wrapper shell, not the <video> itself. Inside
+           it the reel uses object-fit: contain so the frame is NEVER cropped
+           (text near the frame edges stays intact on any screen) and never
+           stretched. The bands that plain contain would letterbox black are
+           instead filled by a canvas that mirrors the reel, heavily blurred
+           and scaled to cover: edge-to-edge ambient colour that tracks the
+           footage live (fireworks bloom into the fill, night skies glow
+           cool) while the true frame stays 1:1 on top. The ambient layer is
+           deliberately croppable — it's redundant imagery by design, so the
+           screen's aspect ratio can take it without touching the reel. If
+           the canvas can't draw, the bands simply fall back to black. */
+        .hero-fs-shell canvas { display: none; }
+        .hero-fs-shell:fullscreen,
+        .hero-fs-shell:-webkit-full-screen {
+            width: 100%;
+            height: 100%;
             background-color: #000;
         }
-        video:-webkit-full-screen {
+        .hero-fs-shell:fullscreen canvas,
+        .hero-fs-shell:-webkit-full-screen canvas {
+            display: block;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(44px) saturate(1.25) brightness(0.92);
+            /* Scale past the edges so the blur's soft falloff never shows */
+            transform: scale(1.14);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero-fs-shell:fullscreen video,
+        .hero-fs-shell:-webkit-full-screen video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
-            background-color: #000;
+            background: transparent;
+            z-index: 1;
         }
 
         /* ---------- Hero height ----------
@@ -457,11 +487,17 @@
              out to reveal the amber glow layer below. Update the <source>
              src to match your encoded file's actual path/name, and swap
              the poster for a real first-frame image once you have one. -->
-        <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-700"
-            autoplay muted playsinline
-            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%230c0c0b'/%3E%3Ctext x='50%25' y='50%25' font-family='monospace' font-size='36' fill='%238a6a34' text-anchor='middle' dominant-baseline='middle'%3EAdd your reel video here%3C/text%3E%3C/svg%3E">
-            <source src="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-reel.mp4" type="video/mp4">
-        </video>
+        <!-- Fullscreen shell: the reel is contained 1:1 (never cropped), with a
+             live blurred ambient copy of the footage filling the bands that
+             would otherwise letterbox black — edge-to-edge without crop. -->
+        <div id="heroFsShell" class="hero-fs-shell absolute inset-0 z-0">
+            <canvas id="heroAmbient" width="640" height="360" aria-hidden="true"></canvas>
+            <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+                autoplay muted playsinline
+                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%230c0c0b'/%3E%3Ctext x='50%25' y='50%25' font-family='monospace' font-size='36' fill='%238a6a34' text-anchor='middle' dominant-baseline='middle'%3EAdd your reel video here%3C/text%3E%3C/svg%3E">
+                <source src="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-reel.mp4" type="video/mp4">
+            </video>
+        </div>
 
         <!-- Revealed once the video ends and fades out: black base + animated amber edge glow -->
         <div id="heroEndedGlow" class="hero-ended-glow"></div>
@@ -1611,6 +1647,8 @@
         const restartBtn = document.getElementById('restartBtn');
         const videoControls = document.getElementById('videoControls');
         const heroGlow = document.getElementById('heroEndedGlow');
+        const heroFsShell = document.getElementById('heroFsShell');
+        const ambientCanvas = document.getElementById('heroAmbient');
 
         if (heroVideo) {
             // --- Volume fade helper ---
@@ -1654,31 +1692,65 @@
                 });
             }
 
-            // --- Fullscreen — native browser fullscreen on the <video> ---
+            // --- Fullscreen — enters fullscreen on the wrapper shell so the
+            //     ambient blurred fill can render around the contained reel.
+            //     iOS Safari doesn't support element fullscreen, so it falls
+            //     back to its own native fullscreen video player here. ---
             if (fullscreenBtn) {
                 fullscreenBtn.addEventListener('click', () => {
                     heroVideo.setAttribute('controls', '');
-                    const request = heroVideo.requestFullscreen
-                        ? heroVideo.requestFullscreen()
-                        : (heroVideo.webkitRequestFullscreen ? heroVideo.webkitRequestFullscreen() : null);
+                    const request = heroFsShell.requestFullscreen
+                        ? heroFsShell.requestFullscreen()
+                        : (heroFsShell.webkitRequestFullscreen ? heroFsShell.webkitRequestFullscreen() : null);
                     if (request && request.catch) {
                         request.catch(() => {
                             // Fullscreen API unavailable/blocked — iOS Safari falls
                             // back to its own native fullscreen video player here.
                             if (heroVideo.webkitEnterFullscreen) heroVideo.webkitEnterFullscreen();
                         });
-                    } else if (!heroVideo.requestFullscreen && heroVideo.webkitEnterFullscreen) {
+                    } else if (!heroFsShell.requestFullscreen && heroVideo.webkitEnterFullscreen) {
                         heroVideo.webkitEnterFullscreen();
                     }
                 });
             }
             const exitFullscreenCleanup = () => {
-                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                if (!fsEl) {
                     heroVideo.removeAttribute('controls');
+                    ambientStop();
+                } else if (fsEl === heroFsShell) {
+                    ambientStart();
                 }
             };
             document.addEventListener('fullscreenchange', exitFullscreenCleanup);
             document.addEventListener('webkitfullscreenchange', exitFullscreenCleanup);
+
+            // --- Ambient fill: mirrors the reel onto a canvas (shown only in
+            //     fullscreen via CSS) so the contain-letterbox bands glow with
+            //     blurred footage instead of black. The loop runs only while
+            //     fullscreen is active; CSS hides the canvas the rest of the
+            //     time. A cross-origin video taints the canvas but drawImage
+            //     itself is unaffected — we never read pixels back. ---
+            const ambientCtx = ambientCanvas ? ambientCanvas.getContext('2d', { alpha: false }) : null;
+            let ambientRunning = false;
+            function drawAmbient() {
+                if (!ambientRunning) return;
+                if (ambientCtx && heroVideo.readyState >= 2) {
+                    try { ambientCtx.drawImage(heroVideo, 0, 0, ambientCanvas.width, ambientCanvas.height); }
+                    catch (e) { /* frame not decodable yet — skip this tick */ }
+                }
+                requestAnimationFrame(drawAmbient);
+            }
+            function ambientStart() {
+                if (!ambientCanvas || !ambientCtx || ambientRunning) return;
+                // Match the canvas aspect ratio to the actual footage
+                if (heroVideo.videoWidth && heroVideo.videoHeight) {
+                    ambientCanvas.height = Math.max(180, Math.round(640 * heroVideo.videoHeight / heroVideo.videoWidth));
+                }
+                ambientRunning = true;
+                requestAnimationFrame(drawAmbient);
+            }
+            function ambientStop() { ambientRunning = false; }
 
             // --- Ended state: fade video out, reveal glow, hide mute/fullscreen ---
             function showEndedState() {
@@ -1693,7 +1765,7 @@
                 // If someone fullscreened the video and it ends there, bring
                 // them back to the page rather than stranding them on a
                 // frozen last frame with no visible restart control.
-                if (document.fullscreenElement === heroVideo || document.webkitFullscreenElement === heroVideo) {
+                if (document.fullscreenElement === heroFsShell || document.webkitFullscreenElement === heroFsShell) {
                     if (document.exitFullscreen) document.exitFullscreen();
                     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
                 }
