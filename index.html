@@ -77,6 +77,66 @@
             background-color: #0c0c0b;
         }
 
+        /* ---------- Fullscreen video ----------
+           The hero video uses object-fit: cover to fill the page, but once
+           the video element itself goes fullscreen that crop looks wrong on
+           tall phone screens. In fullscreen, contain the frame instead so
+           the native aspect ratio is preserved (letterboxed on black). */
+        video:fullscreen {
+            object-fit: contain;
+            background-color: #000;
+        }
+        video:-webkit-full-screen {
+            object-fit: contain;
+            background-color: #000;
+        }
+
+        /* ---------- Hero height ----------
+           100vh includes the area hidden behind mobile browser chrome, so on
+           phones the hero content can overflow/clip. Use svh where supported
+           (vh first as a fallback for older browsers). */
+        .hero-min-h { min-height: 100vh; }
+        @supports (min-height: 100svh) { .hero-min-h { min-height: 100svh; } }
+
+        /* ---------- Hero tagline ----------
+           Each credential is an unbreakable unit: line breaks may only occur
+           between tags, never inside one, so a tag never wraps across lines.
+           Font size scales down on phones so the longest tag still fits the
+           panel (letter-spacing also relaxed — mono + wide tracking is what
+           made the longest tag too wide on mobile).
+           The <360px fallback allows intra-tag wrapping only when the
+           viewport is too narrow for even a single tag — otherwise overflow. */
+        .hero-tagline {
+            font-size: clamp(11px, 3.65vw, 14px);
+            letter-spacing: normal;
+        }
+        @media (min-width: 640px) {
+            .hero-tagline { font-size: 1.125rem; letter-spacing: 0.025em; }
+        }
+        @media (min-width: 768px) {
+            .hero-tagline { font-size: 1.25rem; }
+        }
+        .tag-nowrap { white-space: nowrap; }
+        @media (max-width: 359px) {
+            .tag-nowrap { white-space: normal; }
+        }
+
+        /* ---------- Mobile menu ----------
+           Two columns below sm so the dropdown never occupies most of a small
+           screen. Opaque background so page content doesn't bleed through the
+           nav's translucency behind the links. Scoped to :not(.hidden) so the
+           rule can't override Tailwind's .hidden — otherwise the menu renders
+           open on page load. */
+        #mobileMenu:not(.hidden) { background-color: #0c0c0b; }
+        @media (max-width: 639px) {
+            #mobileMenu:not(.hidden) {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                column-gap: 1.5rem;
+            }
+            #mobileMenu a { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        }
+
         /* ---------- Film grain overlay ---------- */
         .grain-overlay {
             position: fixed;
@@ -392,7 +452,7 @@
     </nav>
 
     <!-- ============ HERO ============ -->
-    <section id="home" class="min-h-screen flex items-center justify-center pt-20 relative overflow-hidden">
+    <section id="home" class="hero-min-h flex items-center justify-center pt-20 pb-24 relative overflow-hidden">
         <!-- Background reel video — plays once on load, muted, then fades
              out to reveal the amber glow layer below. Update the <source>
              src to match your encoded file's actual path/name, and swap
@@ -423,8 +483,11 @@
                 <h1 class="font-display text-5xl sm:text-6xl md:text-8xl tracking-wide mb-4 animate-flicker">
                     JOSEPH MARSHALL
                 </h1>
-                <p class="text-lg md:text-xl text-vu-amber font-mono tracking-wide mb-8">
-                    AUDIO POST-PRODUCTION SPECIALIST &nbsp;·&nbsp; GAME AUDIO &nbsp;·&nbsp; SOUND ENGINEER &nbsp;·&nbsp; COMPOSER
+                <p class="hero-tagline text-vu-amber font-mono mb-8">
+                    <span class="tag-nowrap">AUDIO POST-PRODUCTION SPECIALIST&nbsp;·</span>
+                    <span class="tag-nowrap">GAME AUDIO&nbsp;·</span>
+                    <span class="tag-nowrap">SOUND ENGINEER&nbsp;·</span>
+                    <span class="tag-nowrap">COMPOSER</span>
                 </p>
                 <p class="text-base md:text-lg text-tape-cream-dim max-w-2xl mx-auto mb-12 leading-relaxed">
                     Audio Production and Music Technology graduate from the University of Chichester, specialising in
@@ -454,10 +517,9 @@
         </div>
 
         <!-- Video controls — deliberately absolute (not fixed), so they scroll away with the hero
-             rather than hovering over the whole page. Restart stays visible always (even once the
-             video has ended); mute/fullscreen fade out together once the video ends, since neither
-             is meaningful once there's nothing playing. -->
-        <div class="absolute bottom-6 right-6 z-20 flex items-center gap-2">
+             rather than hovering over the whole page. Left-aligned on mobile so they don't sit on
+             top of the social icon row; right-aligned from the sm breakpoint up, as designed. -->
+        <div class="absolute bottom-6 left-6 sm:left-auto sm:right-6 z-20 flex items-center gap-2">
             <div id="videoControls" class="flex items-center gap-2 transition-opacity duration-500">
                 <button id="unmuteBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Toggle sound">
                     <i class="fas fa-volume-xmark text-vu-amber" id="unmuteIcon"></i>
@@ -594,7 +656,7 @@
                 <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">ABOUT</h2>
             </div>
 
-            <div class="max-w-5xl mx-auto grid md:grid-cols-5 gap-12 items-start">
+            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-12 items-start">
                 <div class="md:col-span-3 space-y-6">
                     <p class="text-tape-cream-dim leading-relaxed">
                         Hi, I'm Joseph Marshall, an Audio Production and Music Technology graduate from 
@@ -673,7 +735,7 @@
                 <button class="filter-btn" data-filter="field">Field Recording</button>
             </div>
 
-            <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8" id="showcaseGrid">
+            <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8" id="showcaseGrid">
 
                 <!-- Card: Studio / Dialogue & Sound Design (video) -->
                 <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="studio">
@@ -1407,7 +1469,7 @@
                 I'm always open to discussing graduate opportunities, collaborations, and freelance audio projects. Feel free to get in touch via email, LinkedIn, or the contact form below.
             </p>
 
-            <div class="grid md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                 <div class="space-y-5">
 
