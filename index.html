@@ -26,8 +26,15 @@
     <link rel="preconnect" href="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev">
     <link rel="dns-prefetch" href="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev">
 
-    <!-- Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS — prebuilt static stylesheet (~16KB, generated from
+         tailwind.config.js + tailwind.input.css). Replaces the Play CDN
+         runtime compiler: no more ~300KB JS on every visit, no runtime
+         compilation cost on phones, no console warning.
+         Regenerate after class changes (one-time CLI download, no Node.js):
+           curl -LO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-macos-arm64
+           chmod +x tailwindcss-macos-arm64
+           ./tailwindcss-macos-arm64 -c tailwind.config.js -i tailwind.input.css -o tailwind.css --minify -->
+    <link rel="stylesheet" href="tailwind.css">
 
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
@@ -37,51 +44,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- Custom Tailwind Config -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'stage-black': '#0c0c0b',
-                        'reel-card': '#161513',
-                        'reel-border': '#2b2925',
-                        'tape-cream': '#ede6d6',
-                        'tape-cream-dim': '#a8a294',
-                        'vu-amber': '#e8a33d',
-                        'vu-amber-dim': '#8a6a34',
-                        'rec-red': '#c1272d'
-                    },
-                    fontFamily: {
-                        'display': ['"Bebas Neue"', 'sans-serif'],
-                        'body': ['Inter', 'sans-serif'],
-                        'mono': ['"IBM Plex Mono"', 'monospace']
-                    },
-                    animation: {
-                        'blink': 'blink 1s steps(1) infinite',
-                        'reveal': 'reveal 0.7s ease-out forwards',
-                        'flicker': 'flicker 4s ease-in-out infinite'
-                    },
-                    keyframes: {
-                        blink: {
-                            '0%, 49%': { opacity: '1' },
-                            '50%, 100%': { opacity: '0.15' }
-                        },
-                        reveal: {
-                            '0%': { transform: 'translateY(24px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' }
-                        },
-                        flicker: {
-                            '0%, 100%': { opacity: '0.9' },
-                            '92%': { opacity: '0.9' },
-                            '93%': { opacity: '0.55' },
-                            '94%': { opacity: '0.9' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind theme config now lives in tailwind.config.js (prebuilt) -->
 
     <style>
         /* ---------- Base ---------- */
@@ -541,6 +504,25 @@
            no visible seam, with a slow, low-amplitude amber glow so the
            hero doesn't go visually dead once the reel finishes — kept
            subtle deliberately so it doesn't compete with page content. */
+        /* V1.2.1 mobile fix: the preroll readout anchors at nearly the same
+           y as the hero's own TC row, so at narrow widths the two mono rows
+           print on top of each other. Fade the TC row out while the preroll
+           overlay is up and crossfade it back once the reel rolls. */
+        .tc-row-dim { transition: opacity 0.5s ease; }
+        .tc-row-dim.is-hidden { opacity: 0; }
+        /* Invisible +8px hit-area extender for small icon links (mobile
+           tap-target comfort) — no layout shift, glyphs stay put. */
+        .tap-expand { position: relative; }
+        .tap-expand::after { content: ""; position: absolute; inset: -8px; }
+        /* Ended state: the mute/fullscreen pair FOLDS AWAY (width collapses,
+           not just fades) so the restart button glides to the hero edge it
+           belongs on instead of floating where the pair used to sit.
+           max-width animates where width:auto wouldn't; the -8px margin
+           cancels the parent's gap-2 once the pair reaches zero width, so
+           the restart button lands exactly on the edge. */
+        #videoControls { max-width: 200px; transition: opacity 0.5s ease, max-width 0.5s ease 0.15s, margin-right 0.5s ease 0.15s; }
+        #videoControls.is-folded { opacity: 0; max-width: 0; margin-right: -8px; overflow: hidden; }
+        #videoControls.is-folded button { flex-shrink: 0; }
         .hero-ended-glow {
             position: absolute;
             inset: 0;
@@ -579,12 +561,49 @@
             50% { opacity: 0.55; transform: scale(1) translate(-1%, 1%); }
         }
 
+        /* V1.2.1: roaming light spots — the amber keeps travelling after the
+           reel ends instead of just breathing in the corners. Two spots drift
+           between offset parked positions so the colour "pops up" in different
+           places; the long cycle means each park reads as its own moment
+           rather than a visible lap. Cheap to run: transform/opacity only,
+           one gradient layer per spot, GPU-composited. */
+        .hero-ended-glow .glow-orb {
+            position: absolute;
+            top: 0; left: 0;
+            width: 66vmax; height: 66vmax;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(232,163,61,0.26) 0%, rgba(232,163,61,0.11) 38%, transparent 66%);
+            opacity: 0;
+            will-change: transform, opacity;
+            pointer-events: none;
+        }
+        .hero-ended-glow.is-visible .glow-orb { animation: heroGlowRoam 13s ease-in-out infinite; }
+        .hero-ended-glow.is-visible .glow-orb.glow-orb--b { animation: heroGlowRoamB 17s ease-in-out infinite; animation-delay: -5s; }
+        @keyframes heroGlowRoam {
+            0%, 8%   { opacity: 0; transform: translate(-10%, -16%) scale(0.85); }
+            16%, 26% { opacity: 1; transform: translate(64%, 2%)    scale(1.15); } /* pops high right, big */
+            36%, 46% { opacity: 0.4; transform: translate(26%, 34%)  scale(1.02); } /* sweeps low centre */
+            56%, 68% { opacity: 1; transform: translate(2%, 52%)     scale(0.9); }  /* pops low left */
+            82%, 100%{ opacity: 0; transform: translate(-10%, -16%) scale(0.85); }
+        }
+        @keyframes heroGlowRoamB {
+            0%, 14%  { opacity: 0; transform: translate(60%, 42%)   scale(0.85); }
+            24%, 34% { opacity: 0.95; transform: translate(-6%, 2%)  scale(1.1); }  /* pops upper left */
+            44%, 54% { opacity: 0.35; transform: translate(18%, 20%) scale(1); }    /* drifts centre */
+            64%, 74% { opacity: 0.95; transform: translate(54%, -8%) scale(0.9); }  /* pops top right */
+            86%, 100%{ opacity: 0; transform: translate(60%, 42%)   scale(0.85); }
+        }
+
         /* ---------- Sprocket perforations on cards ---------- */
         .sprocket-card {
             position: relative;
             background: #161513;
             border: 1px solid #2b2925;
-        }
+            /* Long unbreakable strings (e.g. the contact card's email) must
+               wrap — otherwise a forced card width exceeds the viewport on
+               320px devices. 'anywhere' allows breaks inside the word but
+               only when needed. */
+            overflow-wrap: anywhere;        }
         .sprocket-strip {
             width: 100%;
             height: 14px;
@@ -662,6 +681,7 @@
             html { scroll-behavior: auto; }
             .rec-dot, .animate-blink, .animate-flicker { animation: none !important; }
             .hero-ended-glow::before, .hero-ended-glow::after { animation: none !important; }
+            .hero-ended-glow .glow-orb { animation: none !important; opacity: 0.55; }
             .hamburger span { transition: none !important; }
             #workFaderTrack .fader-cap { transition: none !important; }
             * { transition: none !important; }
@@ -755,22 +775,49 @@
              out to reveal the amber glow layer below. The poster is a real
              first-frame grab (hero-poster.jpg) so the hero looks finished
              the instant the page paints; upload it to the R2 bucket next to
-             the reel. preload="metadata" pulls just the header/moov atom
-             (front-loaded by faststart) before committing to the full file. -->
+             the reel. V1.2.1: autoplay moved out of the attribute into the
+             TC-preroll gate (see script), which pre-loads the whole reel as
+             a blob and only streams from the source as a fallback. -->
         <!-- Fullscreen shell: the reel is contained 1:1 (never cropped), with a
              live blurred ambient copy of the footage filling the bands that
              would otherwise letterbox black — edge-to-edge without crop. -->
         <div id="heroFsShell" class="hero-fs-shell absolute inset-0 z-0">
             <canvas id="heroAmbient" width="640" height="360" aria-hidden="true"></canvas>
             <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-                autoplay muted playsinline preload="metadata"
+                muted playsinline preload="metadata"
                 poster="hero-poster.jpg">
                 <source src="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-reel.mp4" type="video/mp4">
             </video>
+            <!-- In-fullscreen loading readout — a twin of the preroll readout.
+                 The page-level overlay is a SIBLING of this shell, so it can't
+                 render while the shell is fullscreened; without this, buffering
+                 in fullscreen would show nothing. Mirrors the overlay's label
+                 and bar (see syncFsBuffer in the script). -->
+            <div id="fsBuffer" class="hidden absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 px-6 pointer-events-none" aria-hidden="true">
+                <div class="w-52 h-[3px] bg-reel-border overflow-hidden rounded-full">
+                    <div id="fsBufferBar" class="h-full w-full bg-vu-amber origin-left will-change-transform" style="transform: scaleX(0)"></div>
+                </div>
+                <div class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-tape-cream-dim">
+                    <span class="rec-dot animate-blink"></span>
+                    <span id="fsBufferLabel">LOADING HERO_REEL.MOV</span>
+                </div>
+            </div>
+            <!-- In-fullscreen twin of the adaptive-quality note: #qualityNote
+                 is a SIBLING of this shell, so it can't render while the shell
+                 is fullscreened. Shown only when the shell is fullscreened AND
+                 the page-level note is visible (see syncFsQuality in the
+                 script). Anchored low to clear the centred #fsBuffer readout
+                 and the native fullscreen controls. -->
+            <div id="fsQualityNote" class="hidden absolute bottom-24 inset-x-0 z-20 flex justify-center px-6 pointer-events-none">
+                <span class="font-mono text-xs uppercase tracking-widest text-vu-amber/90 bg-stage-black/80 px-4 py-2 text-center">Video quality is lowered to support connection · audio quality has not been affected</span>
+            </div>
         </div>
 
-        <!-- Revealed once the video ends and fades out: black base + animated amber edge glow -->
-        <div id="heroEndedGlow" class="hero-ended-glow"></div>
+        <!-- Revealed once the video ends and fades out: black base + animated amber edge glow + roaming light spots -->
+        <div id="heroEndedGlow" class="hero-ended-glow">
+            <span class="glow-orb glow-orb--a" aria-hidden="true"></span>
+            <span class="glow-orb glow-orb--b" aria-hidden="true"></span>
+        </div>
 
         <!-- Dark wash over the video so hero text stays readable regardless of footage -->
         <div class="absolute inset-0 z-[1] bg-stage-black/60 pointer-events-none"></div>
@@ -779,16 +826,36 @@
              edge is completely invisible by the time it reaches the waveform -->
         <div class="hero-bottom-fade" aria-hidden="true"></div>
 
+        <!-- V1.2.1 preroll — zero-buffering loader. Sits BEHIND the title
+             panel (z-4 under the content layer) so the title and description
+             stay visible while the reel loads; the readout row anchors just
+             below the nav, inside the first viewport on every device (the
+             hero section is taller than the screen on mobile). Doubles as
+             the mid-reel buffering readout: same component, translucent
+             scrim (see script). -->
+        <div id="heroPreroll" class="absolute inset-0 z-[4] bg-stage-black transition-opacity duration-500">
+            <div class="absolute inset-x-0 top-24 sm:top-28 flex flex-col items-center gap-3 px-6">
+                <div class="w-52 h-[3px] bg-reel-border overflow-hidden rounded-full" aria-hidden="true">
+                    <div id="prerollBar" class="h-full w-full bg-vu-amber origin-left will-change-transform transition-transform duration-300 ease-linear" style="transform: scaleX(0)"></div>
+                </div>
+                <div class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-tape-cream-dim">
+                    <span class="rec-dot animate-blink"></span>
+                    <span id="prerollLabel" role="status">LOADING HERO_REEL.MOV</span>
+                </div>
+                <button id="prerollPlay" type="button" class="hidden px-6 py-3 btn-amber font-mono text-xs uppercase tracking-widest">Play reel</button>
+            </div>
+        </div>
+
         <div class="container mx-auto px-6 z-10 relative">
             <div class="hero-blob-panel w-fit max-w-4xl mx-auto text-center bg-stage-black/50 backdrop-blur-sm px-6 py-8 sm:px-12 sm:py-12">
 
                 <!-- Timecode readout -->
-                <div class="flex items-center justify-center gap-3 mb-8 font-mono text-vu-amber text-sm">
+                <div class="tc-row-dim flex items-center justify-center gap-3 mb-8 font-mono text-vu-amber text-sm">
                     <span class="rec-dot animate-blink"></span>
                     <span>TC</span>
                     <span id="timecode" class="timecode-display">00:00:00:00</span>
                     <span class="text-tape-cream-dim">25fps</span>
-                    <span id="bufferIndicator" class="hidden font-mono text-vu-amber/80 tracking-widest" role="status">· BUFFERING ·</span>
+
                 </div>
 
                 <h1 class="font-display text-5xl sm:text-6xl md:text-8xl tracking-wide mb-4 animate-flicker">
@@ -815,8 +882,8 @@
                 </div>
 
                 <div class="mt-12 flex justify-center space-x-6 text-xl">
-                    <a href="mailto:JMMarshall.Audio@proton.me" class="hover:text-vu-amber transition" aria-label="Email"><i class="fas fa-envelope"></i></a>
-                    <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="hover:text-vu-amber transition" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="mailto:JMMarshall.Audio@proton.me" class="tap-expand hover:text-vu-amber transition" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                    <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="tap-expand hover:text-vu-amber transition" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                     <!-- Not currently in use — uncomment and add a real profile URL once available.
                     <a href="[IMDb URL]" class="hover:text-vu-amber transition" aria-label="IMDb"><i class="fab fa-imdb"></i></a>
                     -->
@@ -842,6 +909,13 @@
             <button id="restartBtn" type="button" class="w-11 h-11 border border-vu-amber bg-stage-black/70 flex items-center justify-center hover:bg-vu-amber/20 transition" aria-label="Restart video">
                 <i class="fas fa-rotate-left text-vu-amber"></i>
             </button>
+        </div>
+
+        <!-- Adaptive-quality note: visible only while the reel streams below
+             full quality on a measured-slow connection. Audio is stream-copied
+             into every rendition, so it is genuinely never affected. -->
+        <div id="qualityNote" class="hidden absolute bottom-24 inset-x-0 z-20 flex justify-center px-6 pointer-events-none">
+            <span class="font-mono text-xs uppercase tracking-widest text-vu-amber/90 bg-stage-black/80 px-4 py-2 text-center">Video quality is lowered to support connection · audio quality has not been affected</span>
         </div>
 
         <!-- Ambient waveform, fixed to hero — also acts as the video's visual cutoff at the bottom edge -->
@@ -1714,7 +1788,7 @@
                 </p>
 
                 <a href="mailto:JMMarshall.Audio@proton.me" 
-                   class="text-tape-cream-dim hover:text-vu-amber transition text-xl"
+                   class="tap-expand text-tape-cream-dim hover:text-vu-amber transition text-xl"
                    aria-label="Email">
                     <i class="fas fa-envelope"></i>
                 </a>
@@ -1763,6 +1837,13 @@
                         <span class="px-3 py-1.5 border border-reel-border text-sm">Field Recording &amp; Sound Library Creation</span>
                         <span class="px-3 py-1.5 border border-reel-border text-sm">Interactive Audio Implementation (Wwise)</span>
                         <span class="px-3 py-1.5 border border-reel-border text-sm">Media Composition &amp; Scoring</span>
+                    </div>
+                    <!-- Certification — same affordance as the CV button: a document
+                         link, outline style, shipped as certification.pdf at the site
+                         root next to cv.pdf. Lives inside the degree card since it
+                         certifies exactly this qualification. -->
+                    <div class="mt-4 text-center">
+                        <a href="certification.pdf" class="inline-block px-8 py-3 btn-outline rounded-none">View Certification</a>
                     </div>
                 </div>
 
@@ -1870,8 +1951,8 @@
     <footer class="py-8 border-t border-reel-border">
         <div class="container mx-auto px-6 text-center">
             <div class="mb-4 text-lg">
-                <a href="mailto:JMMarshall.Audio@proton.me" class="mx-2 hover:text-vu-amber transition"><i class="fas fa-envelope"></i></a>
-                <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="mx-2 hover:text-vu-amber transition"><i class="fab fa-linkedin"></i></a>
+                <a href="mailto:JMMarshall.Audio@proton.me" class="tap-expand mx-2 hover:text-vu-amber transition"><i class="fas fa-envelope"></i></a>
+                <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="tap-expand mx-2 hover:text-vu-amber transition"><i class="fab fa-linkedin"></i></a>
                 <!-- SoundCloud
                 <a href="https://soundcloud.com/jmmarshall-audio" target="_blank" rel="noopener" class="mx-2 hover:text-vu-amber transition">
                     <i class="fab fa-soundcloud"></i>
@@ -1891,6 +1972,10 @@
         </div>
     </footer>
 
+    <!-- hls.js — adaptive streaming engine for the bad-connection path
+         (self-hosted, no CDN dependency; only loaded-then-used when the
+         connection measures too slow for the full-quality reel). -->
+    <script src="hls.min.js"></script>
     <script>
         // Contact form — submit via fetch so we can show an inline
         // success/error message instead of navigating away.
@@ -1942,8 +2027,16 @@
         const videoControls = document.getElementById('videoControls');
         const heroGlow = document.getElementById('heroEndedGlow');
         const heroFsShell = document.getElementById('heroFsShell');
+        const fsBuffer = document.getElementById('fsBuffer');
+        const fsBufferBar = document.getElementById('fsBufferBar');
+        const fsBufferLabel = document.getElementById('fsBufferLabel');
+        const fsQualityNote = document.getElementById('fsQualityNote');
         const ambientCanvas = document.getElementById('heroAmbient');
-        const bufferIndicator = document.getElementById('bufferIndicator');
+        const preroll = document.getElementById('heroPreroll');
+        const prerollBar = document.getElementById('prerollBar');
+        const prerollLabel = document.getElementById('prerollLabel');
+        const prerollPlay = document.getElementById('prerollPlay');
+        const heroTcRow = document.querySelector('.tc-row-dim');
         // NOTE: volume fades are a silent no-op on iOS (volume is read-only
         // there by platform policy) — unmute snaps to full volume on iPhones.
         // Platform limitation, not a bug; the fade works as designed elsewhere.
@@ -2012,6 +2105,8 @@
                 });
             }
             const exitFullscreenCleanup = () => {
+                syncFsBuffer();
+                syncFsQuality();
                 const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
                 if (!fsEl) {
                     heroVideo.removeAttribute('controls');
@@ -2054,22 +2149,292 @@
             function showEndedState() {
                 heroVideo.classList.add('opacity-0');
                 if (videoControls) {
-                    videoControls.classList.add('opacity-0', 'pointer-events-none');
+                    videoControls.classList.add('opacity-0', 'pointer-events-none', 'is-folded');
                 }
                 if (heroGlow) heroGlow.classList.add('is-visible');
-                if (bufferIndicator) bufferIndicator.classList.add('hidden');
+                if (qualityNote) qualityNote.classList.add('hidden');
+                if (fsQualityNote) fsQualityNote.classList.add('hidden');
+                hidePreroll();
             }
 
-            // --- Buffering indicator: a quiet on-brand readout when the stream
-            //     can't keep up, instead of a frozen frame looking like a bug.
-            //     `waiting` fires on any decode/network stall; `playing` clears
-            //     it. Never shown once the reel has ended. ---
-            if (bufferIndicator) {
-                heroVideo.addEventListener('waiting', () => {
-                    if (!heroVideo.ended) bufferIndicator.classList.remove('hidden');
-                });
-                heroVideo.addEventListener('playing', () => bufferIndicator.classList.add('hidden'));
+            // --- Preroll: zero-buffering loader (V1.2.1) ---
+            // Primary path: fetch the WHOLE reel once (real progress on the
+            // preroll bar), hand the video a blob URL and play from memory —
+            // after that no network is involved, so mid-play stalls are
+            // impossible. Fallbacks (data saver, a slow line where a full
+            // pre-load would take >20s, fetch/CORS failure, or a blob that
+            // never plays): stream from the source through the adaptive
+            // buffer gate — buffer growth → throughput → seconds-ahead
+            // target. Hard failsafes mean the page is never held hostage on
+            // either path. The overlay doubles as the mid-reel buffering
+            // readout: `waiting` re-shows it (translucent), `playing` clears
+            // it. NOTE: blob fetch needs same-origin or a CORS rule on the
+            // R2 bucket (free) — otherwise the fallback path runs.
+            const REEL_BYTES = 71311646; // R2 copy is md5-identical to the master
+            const REEL_SRC = (heroVideo.querySelector('source') || {}).src || '';
+            const qualityNote = document.getElementById('qualityNote');
+            let hls = null;
+            let gateOpen = false;
+            let gateTimer = null;
+
+            function bufferedAheadSeconds() {
+                try {
+                    const b = heroVideo.buffered;
+                    return b.length ? b.end(b.length - 1) - heroVideo.currentTime : 0;
+                } catch (err) { return 0; }
             }
+            // Keep both buffer bars truthful during mid-reel stalls (the
+            // gate timer is long gone by then).
+            let stallBarTimer = null;
+            function startStallBar() {
+                if (stallBarTimer) return;
+                stallBarTimer = setInterval(() => {
+                    const dur = isFinite(heroVideo.duration) && heroVideo.duration ? heroVideo.duration : 81;
+                    setBufferBars(dur ? Math.min(1, bufferedAheadSeconds() / dur) : 0);
+                }, 250);
+            }
+            function stopStallBar() { if (stallBarTimer) { clearInterval(stallBarTimer); stallBarTimer = null; } }
+
+            function hidePreroll() {
+                if (preroll) preroll.classList.add('opacity-0', 'pointer-events-none');
+                if (heroTcRow) heroTcRow.classList.remove('is-hidden'); // TC readout returns once the reel rolls
+                stopStallBar();
+                syncFsBuffer();
+            }
+
+            // Keep the in-fullscreen readout in lockstep with the page-level
+            // preroll overlay: same visibility, same label, same bar scale.
+            // (The overlay itself can't render — it lives outside the shell
+            // that gets fullscreened.)
+            function syncFsBuffer() {
+                if (!fsBuffer) return;
+                const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                const show = fsEl === heroFsShell && preroll && !preroll.classList.contains('opacity-0');
+                fsBuffer.classList.toggle('hidden', !show);
+                if (show && fsBufferLabel && prerollLabel) fsBufferLabel.textContent = prerollLabel.textContent;
+            }
+            // Keep the in-fullscreen twin of the adaptive-quality note in
+            // lockstep with the page-level note (#qualityNote): shown only
+            // while the shell is fullscreened AND the note is up — the
+            // page-level one can't render there (it lives outside the shell).
+            function syncFsQuality() {
+                if (!fsQualityNote) return;
+                const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                const show = fsEl === heroFsShell && qualityNote && !qualityNote.classList.contains('hidden');
+                fsQualityNote.classList.toggle('hidden', !show);
+            }
+            function setBufferBars(scale) {
+                if (prerollBar) prerollBar.style.transform = `scaleX(${scale})`;
+                if (fsBufferBar) fsBufferBar.style.transform = `scaleX(${scale})`;
+            }
+            function openGate() {
+                if (gateOpen) return;
+                gateOpen = true;
+                if (gateTimer) { clearInterval(gateTimer); gateTimer = null; }
+                if (prerollLabel) prerollLabel.textContent = '· Roll ·';
+                syncFsBuffer();
+                // Mid-reel visits reuse this overlay with a translucent scrim.
+                // (If Tailwind is ever prebuilt, include bg-stage-black/75.)
+                if (preroll) preroll.classList.replace('bg-stage-black', 'bg-stage-black/75');
+                heroVideo.play().catch(() => {
+                    // Play refused — hand control to the visitor, never hang.
+                    if (prerollLabel) prerollLabel.textContent = 'Tap to roll';
+                    syncFsBuffer();
+                    if (prerollPlay) prerollPlay.classList.remove('hidden');
+                });
+            }
+
+            // HLS ladder (bad-connection path): hls.js drives adaptive
+            // switching across the renditions in hls/. Audio is stream-copied
+            // in every rendition, so quality is never affected. Any fatal HLS
+            // error degrades to plain MP4 streaming below.
+            function startHlsSource() {
+                if (hls || !REEL_SRC) return;
+                try {
+                    const hlsCfg = {
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 60,
+                        startLevel: 0,                  // start low, let ABR ramp up
+                        abrEwmaDefaultEstimate: 500000  // pessimistic first estimate
+                    };
+                    // Debug: ?cap=0|1 pins the top rendition (0 = 480p only)
+                    // so the lowered-quality note can be inspected on fast links.
+                    const capMatch = location.search.match(/[?&]cap=(\d+)\b/);
+                    if (capMatch) hlsCfg.autoLevelCapping = Number(capMatch[1]);
+                    hls = new Hls(hlsCfg);
+                    window.__hls = hls; // debug handle: console access to the player (e.g. __hls.currentLevel)
+                    if (capMatch) {
+                        // Apply the pin once levels exist — an early pin gets
+                        // reset by the first ABR computation. (hls.js also
+                        // ignores an autoLevelCapping of 0 in some builds.)
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            hls.autoLevelCapping = Number(capMatch[1]);
+                            hls.currentLevel = Number(capMatch[1]); // manual pin: debug only
+                        });
+                    }
+                    hls.loadSource(REEL_SRC.replace('hero-reel.mp4', 'hls/master.m3u8'));
+                    hls.attachMedia(heroVideo);
+                    hls.on(Hls.Events.LEVEL_SWITCHED, (evt, data) => {
+                        const levels = (hls && hls.levels) || [];
+                        const low = levels.length > 1 && data.level < levels.length - 1;
+                        if (qualityNote) qualityNote.classList.toggle('hidden', !low);
+                        syncFsQuality();
+                    });
+                    hls.on(Hls.Events.ERROR, (evt, data) => {
+                        if (!data.fatal) return;
+                        try { hls.destroy(); } catch (err) { /* already gone */ }
+                        hls = null;
+                        if (qualityNote) qualityNote.classList.add('hidden');
+                        syncFsQuality();
+                        // Degrade to plain MP4 streaming.
+                        if (heroVideo.preload !== 'auto') { heroVideo.preload = 'auto'; heroVideo.load(); }
+                    });
+                } catch (err) {
+                    hls = null;
+                    if (heroVideo.preload !== 'auto') { heroVideo.preload = 'auto'; heroVideo.load(); }
+                }
+            }
+
+            function startAdaptiveGate() {
+                // Fallback path: stream straight from the source, gated by
+                // buffered seconds (data saver, slow lines, any fetch
+                // failure). Buffer growth → throughput → seconds-ahead target.
+                if (gateTimer) { clearInterval(gateTimer); gateTimer = null; }
+                if (prerollLabel) prerollLabel.textContent = 'LOADING HERO_REEL.MOV';
+                if (window.Hls && Hls.isSupported()) {
+                    startHlsSource(); // adaptive ladder: low quality first, ramps up
+                } else if (heroVideo.preload !== 'auto') { heroVideo.preload = 'auto'; heroVideo.load(); }
+                const gateStartedAt = performance.now();
+                let lastAhead = 0, lastT = 0, measuredBps = 0;
+                gateTimer = setInterval(() => {
+                    const now = performance.now();
+                    const ahead = bufferedAheadSeconds();
+                    const dur = isFinite(heroVideo.duration) && heroVideo.duration ? heroVideo.duration : 81;
+                    if (lastT && ahead > lastAhead) {
+                        const instBps = ((ahead - lastAhead) * dur * 8) / ((now - lastT) / 1000);
+                        measuredBps = measuredBps ? measuredBps * 0.5 + instBps * 0.5 : instBps;
+                    }
+                    lastAhead = ahead; lastT = now;
+                    setBufferBars(dur ? Math.min(1, ahead / dur) : 0);
+                    const waited = (now - gateStartedAt) / 1000;
+                    const avgBps = (REEL_BYTES * 8) / dur;
+                    const target = measuredBps / avgBps >= 4 ? 5
+                                 : measuredBps / avgBps >= 1.5 ? 10 : 15;
+                    if (ahead >= target) openGate();
+                    else if (waited >= 3 && ahead >= 2) openGate(); // decent head start
+                    else if (waited >= 4) openGate();               // absolute cap (iOS pre-buffer)
+                    if (gateOpen && gateTimer) { clearInterval(gateTimer); gateTimer = null; }
+                }, 250);
+            }
+
+            function fetchReelToBlob() {
+                // Zero-buffering path: download the whole reel once, hand the
+                // video a blob URL, and play from memory. Real progress drives
+                // the preroll bar and label. Falls back to the adaptive gate
+                // if the download is too slow, fails, or never plays.
+                const reelUrl = REEL_SRC || heroVideo.currentSrc;
+                if (!reelUrl || !window.fetch || !window.AbortController) { startAdaptiveGate(); return; }
+                const controller = new AbortController();
+                let settled = false;
+                const fallback = () => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(failsafe);
+                    try { controller.abort(); } catch (err) { /* already done */ }
+                    startAdaptiveGate();
+                };
+                const failsafe = setTimeout(fallback, 30000); // never hang on black
+                fetch(reelUrl, { signal: controller.signal }).then(res => {
+                    if (!res.ok || !res.body) throw new Error('no stream');
+                    const total = Number(res.headers.get('Content-Length')) || REEL_BYTES;
+                    const reader = res.body.getReader();
+                    const chunks = [];
+                    let bytes = 0, lastB = 0, lastT = 0, measuredBps = 0;
+                    const pump = () => reader.read().then(({ done, value }) => {
+                        if (settled) return;
+                        if (done) {
+                            settled = true;
+                            clearTimeout(failsafe);
+                            if (bytes < total * 0.99) { startAdaptiveGate(); return; } // truncated
+                            try {
+                                heroVideo.src = URL.createObjectURL(new Blob(chunks, { type: 'video/mp4' }));
+                            } catch (err) { startAdaptiveGate(); return; }
+                            heroVideo.load();
+                            const onReady = () => {
+                                heroVideo.removeEventListener('canplay', onReady);
+                                setBufferBars(1);
+                                openGate();
+                            };
+                            heroVideo.addEventListener('canplay', onReady);
+                            // Net: if the blob never becomes playable, stream instead.
+                            setTimeout(() => {
+                                if (!gateOpen) {
+                                    heroVideo.removeEventListener('canplay', onReady);
+                                    startAdaptiveGate();
+                                }
+                            }, 5000);
+                            return;
+                        }
+                        chunks.push(value);
+                        bytes += value.byteLength;
+                        const now = performance.now();
+                        if (lastT) {
+                            const instBps = ((bytes - lastB) * 8) / ((now - lastT) / 1000);
+                            measuredBps = measuredBps ? measuredBps * 0.5 + instBps * 0.5 : instBps;
+                        }
+                        lastB = bytes; lastT = now;
+                        setBufferBars(Math.min(1, bytes / total));
+                        // Slow line: full pre-load would take >20s — stream instead.
+                        if (measuredBps && (total / (measuredBps / 8)) > 20 && bytes < total / 4) {
+                            settled = true;
+                            clearTimeout(failsafe);
+                            controller.abort();
+                            startAdaptiveGate();
+                            return;
+                        }
+                        return pump();
+                    }).catch(() => fallback());
+                    pump();
+                }).catch(() => fallback());
+            }
+
+            if (preroll) {
+                // The readout owns the TC row's slot until the reel rolls
+                // (they overlap at narrow widths — see .tc-row-dim note).
+                if (heroTcRow) heroTcRow.classList.add('is-hidden');
+                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+                const forceHls = /[?&]stream=hls\b/.test(location.search); // debug/testing override
+                if (conn.saveData || (conn.effectiveType || '').includes('2g')) {
+                    // Data saver: don't spend their bytes without consent —
+                    // stream on demand instead of pre-loading everything.
+                    if (prerollLabel) prerollLabel.textContent = 'Reel paused · data saver on';
+                    if (prerollPlay) {
+                        prerollPlay.classList.remove('hidden');
+                        prerollPlay.addEventListener('click', () => {
+                            prerollPlay.classList.add('hidden');
+                            openGate();
+                        }, { once: true });
+                    }
+                } else if (forceHls) {
+                    startAdaptiveGate(); // skip the blob probe, straight to the adaptive ladder
+                } else {
+                    fetchReelToBlob();
+                }
+            } else {
+                // Overlay markup missing — degrade to plain autoplay.
+                heroVideo.play().catch(() => {});
+            }
+
+            // `waiting` fires on any decode/network stall; `playing` clears it.
+            heroVideo.addEventListener('waiting', () => {
+                if (heroVideo.ended || !gateOpen || !preroll) return;
+                if (prerollLabel) prerollLabel.textContent = 'LOADING HERO_REEL.MOV';
+                if (heroTcRow) heroTcRow.classList.add('is-hidden');
+                preroll.classList.remove('opacity-0', 'pointer-events-none');
+                startStallBar();
+                syncFsBuffer();
+            });
+            heroVideo.addEventListener('playing', () => { stopStallBar(); hidePreroll(); });
 
             heroVideo.addEventListener('ended', () => {
                 // If someone fullscreened the video and it ends there, bring
@@ -2088,7 +2453,7 @@
                     if (heroGlow) heroGlow.classList.remove('is-visible');
                     heroVideo.classList.remove('opacity-0');
                     if (videoControls) {
-                        videoControls.classList.remove('opacity-0', 'pointer-events-none');
+                        videoControls.classList.remove('opacity-0', 'pointer-events-none', 'is-folded');
                     }
                     // Restart always resets to muted/background-safe, rather
                     // than remembering whatever mute state was left before.
@@ -2111,7 +2476,7 @@
                 const videoObserver = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            if (!heroVideo.ended) heroVideo.play().catch(() => {});
+                            if (!heroVideo.ended && gateOpen) heroVideo.play().catch(() => {});
                         } else {
                             heroVideo.pause();
                         }
