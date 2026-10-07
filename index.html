@@ -11,12 +11,26 @@
     <meta property="og:description" content="Portfolio of dialogue editing, sound design, and mixing work for film, TV and broadcast.">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
+    <!-- og:image / twitter:image — points at the poster frame on the same R2
+         bucket as the reel. Upload hero-poster.jpg there (same filename) to
+         activate link-preview thumbnails in Slack/WhatsApp/LinkedIn etc. -->
+    <meta property="og:image" content="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-poster.jpg">
+    <meta name="twitter:image" content="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-poster.jpg">
+
+    <!-- Inline favicon: amber waveform pulse on the stage-black ground. No
+         extra request, no 404, and it survives single-file deploys. -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230c0c0b'/%3E%3Cpath d='M8 34h7l5-14 7 26 6-20 4 8h19' stroke='%23e8a33d' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+    <!-- Warm the media connection early so the reel's first request doesn't
+         pay full TLS setup latency. -->
+    <link rel="preconnect" href="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev">
+    <link rel="dns-prefetch" href="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev">
 
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
 
     <!-- Fonts: Bebas Neue (display), Inter (body), IBM Plex Mono (timecode/technical) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -151,12 +165,65 @@
             .tag-nowrap { white-space: normal; }
         }
 
-        /* ---------- Mobile menu ----------
-           Two columns below sm so the dropdown never occupies most of a small
-           screen. Opaque background so page content doesn't bleed through the
-           nav's translucency behind the links. Scoped to :not(.hidden) so the
-           rule can't override Tailwind's .hidden — otherwise the menu renders
-           open on page load. */
+        /* ---------- Hamburger → X morph ----------
+           Closed state replicates the V1.1.5 icon exactly (fa-bars @ text-xl
+           = 20px em): three 1.25px pill-ended bars, 17.5px wide, bar centres
+           6.875px apart — same geometry Font Awesome renders.
+           Choreography (opening), per spec:
+             • top line pivots about its RIGHT end, left tip swings down → "/"
+             • bottom line pivots about its RIGHT end, left tip swings up → "\"
+             • middle is TWO stacked spans rotating about their own centres:
+               one lands on "/", the other on "\" — they form the crossing.
+           All four strokes stay visible and land as two clean arms; closing
+           runs the exact reverse. Motion is transform-only (no layout) so it
+           stays 60fps. .is-open on the button drives it. */
+        .hamburger {
+            position: relative;
+            width: 17.5px;   /* fa-bars @ 20px: 448/512 × 20 */
+            height: 20px;
+            display: inline-block;
+        }
+        .hamburger span {
+            position: absolute;
+            left: 0;
+            display: block;
+            width: 100%;
+            height: 1.25px;          /* fa-bars: 32/512 × 20 */
+            border-radius: 9999px;   /* fa-bars fully-rounded bar ends */
+            background: currentColor;
+            transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+            will-change: transform;
+        }
+        /* Bar centres at the fa-bars y positions (76 / 252 / 428 of 512).
+           Closed transforms are stated explicitly (not `none`) so the open
+           morph interpolates per-function instead of falling back to matrix
+           interpolation. */
+        .hamburger .bar-top { top: 2.34px; transform-origin: 100% 50%; transform: translateY(0) rotate(0deg); }
+        .hamburger .bar-bottom { top: 16.09px; transform-origin: 100% 50%; transform: translateY(0) rotate(0deg); }
+        /* Middle twins: two lines occupying the same middle slot. */
+        .hamburger .mid-a,
+        .hamburger .mid-b {
+            top: 9.22px;
+            transform-origin: 50% 50%;
+            transform: rotate(0deg) scaleX(1);
+        }
+        /* Open: each pair of strokes lands COINCIDENT and the X spans the box
+           corner-to-corner, so it reads centred — no left-side offset.
+             • Mid twins rotate ±45° about their centres. A 17.5px bar rotated
+               45° only spans 12.37px horizontally, which would park the X
+               2.56px inside the box's left edge while its right side stayed
+               flush — the "offset" look. scaleX(√2) during the rotation
+               restores the full 17.5px horizontal span, so both arms reach
+               the corners exactly.
+             • Top & bottom bars pivot about their RIGHT ends (per spec)
+               through ±45°; that moves each centre-line 1.875px past its
+               twin's line at the box centre, so a small ∓1.875px translateY
+               lands each pair exactly collinear, caps meeting at the corners. */
+        #mobileMenuBtn.is-open .bar-top { transform: translateY(-1.875px) rotate(-45deg); }
+        #mobileMenuBtn.is-open .bar-bottom { transform: translateY(1.875px) rotate(45deg); }
+        #mobileMenuBtn.is-open .mid-a { transform: rotate(-45deg) scaleX(1.4142); }
+        #mobileMenuBtn.is-open .mid-b { transform: rotate(45deg) scaleX(1.4142); }
+
         #mobileMenu:not(.hidden) { background-color: #0c0c0b; }
         @media (max-width: 639px) {
             #mobileMenu:not(.hidden) {
@@ -166,6 +233,70 @@
             }
             #mobileMenu a { padding-top: 0.75rem; padding-bottom: 0.75rem; }
         }
+
+        /* ---------- Hero text panel — shaped blob (SVG clip-path) ----------
+           The panel hugging the hero text is an organic blob, per the hand-drawn
+           reference. The path is defined in objectBoundingBox units (0–1), so the
+           shape scales with the panel at every screen size with no pixel maths.
+           Two variants: a wide/bulbous desktop path and a taller/narrower mobile
+           path, swapped at the sm breakpoint. clip-path with objectBoundingBox
+           slightly distorts the curve at very different aspect ratios — that's
+           the trade for one shape scaling everywhere; the two variants bound the
+           distortion to a sensible range. Without SVG/CSS clip-path support the
+           rule is ignored and the panel falls back to the plain rounded rect. */
+        .hero-blob-panel {
+            border-radius: 0;
+            clip-path: url(#heroBlobDesktop);
+            /* Kill the default rounded rect so the clip is the only shape. */
+        }
+        @media (max-width: 639.98px) {
+            .hero-blob-panel { clip-path: url(#heroBlobMobile); }
+        }
+
+        /* ---------- Bottom gradient: video melts into the page ----------
+           Sits above the video/wash (z-2) but below content and the waveform.
+           Fully invisible on the ended state (page is black there anyway), and
+           it lives OUTSIDE the fullscreen shell so fullscreen is untouched. */
+        .hero-bottom-fade {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 20rem;
+            /* Must read FULLY black before the sawtooth's tallest tooth.
+               Geometry: the wave SVG is h-28 (112px) anchored to the hero
+               bottom, and its tallest teeth reach y=20 of a 120-unit viewBox
+               → 18.7px below its top → 93.3px above the hero bottom. Solid
+               black starts at 69% of 320px = 99px above the bottom — a ~6px
+               margin above the tooth tops — so no video texture survives
+               behind or between the teeth. The remaining 220px is the gentle
+               melt. */
+            background: linear-gradient(to bottom,
+                rgba(12, 12, 11, 0) 0%,
+                rgba(12, 12, 11, 0.45) 45%,
+                rgba(12, 12, 11, 0.85) 62%,
+                #0c0c0b 69%,
+                #0c0c0b 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* ---------- Skip link (keyboard users) ----------
+           Invisible until focused; jumps straight to the hero. */
+        .skip-link {
+            position: fixed;
+            top: -60px;
+            left: 12px;
+            z-index: 2000;
+            padding: 10px 16px;
+            background: #e8a33d;
+            color: #0c0c0b;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            border-radius: 4px;
+            transition: top 0.2s ease;
+        }
+        .skip-link:focus { top: 12px; outline: 2px solid #ede6d6; outline-offset: 2px; }
 
         /* ---------- Film grain overlay ---------- */
         .grain-overlay {
@@ -226,6 +357,89 @@
             height: 20px;
         }
 
+        /* ---------- Fader housing: dresses the Work-section scrubber up as a
+           real console channel-strip fader — metal casing, dB scale, ticks.
+           Restored from V2.html — the static cap divider is now a live control. */
+        .fader-strip {
+            position: relative;
+            background: linear-gradient(180deg, #201e1a 0%, #17150f 55%, #0d0c0a 100%);
+            border: 1px solid #3a372f;
+            border-radius: 4px;
+            padding: 9px 14px 10px;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.05),
+                inset 0 -1px 3px rgba(0,0,0,0.6),
+                0 2px 6px rgba(0,0,0,0.45);
+        }
+        /* Mounting screws, top corners — sells the "piece of hardware" read */
+        .fader-strip::before,
+        .fader-strip::after {
+            content: "";
+            position: absolute;
+            top: 4px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #6b665c, #201e1a 70%);
+            box-shadow: inset 0 0 1px rgba(0,0,0,0.9);
+        }
+        .fader-strip::before { left: 5px; }
+        .fader-strip::after { right: 5px; }
+
+        .fader-scale {
+            position: relative;
+            height: 11px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            line-height: 1;
+            color: #8a6a34;
+            letter-spacing: 0.01em;
+            margin-bottom: 3px;
+        }
+        .fader-scale span {
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .fader-scale span:first-child { transform: translateX(0); }
+        .fader-scale span:last-child { transform: translateX(-100%); }
+        .fader-scale span.is-unity { color: #e8a33d; font-weight: 600; }
+
+        .fader-ticks {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 6px;
+            margin-bottom: 3px;
+            padding: 0 1px;
+        }
+        .fader-ticks span { width: 1px; height: 4px; background: #4a463d; }
+        .fader-ticks span:first-child,
+        .fader-ticks span:last-child { height: 6px; background: #6b6656; }
+        .fader-ticks span.is-unity { height: 6px; background: #e8a33d; }
+
+        /* End-stops on the rail itself, like a physical fader slot */
+        .track-rail::before,
+        .track-rail::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 9px;
+            background: #55504a;
+        }
+        .track-rail::before { left: -2px; }
+        .track-rail::after { right: -2px; }
+
+        /* Scrubber interaction states (hybrid fader) */
+        #workFaderTrack { cursor: grab; touch-action: none; }
+        #workFaderTrack:active { cursor: grabbing; }
+        #workFaderTrack .fader-cap { transition: left 0.15s ease; }
+        #workFaderTrack.is-dragging .fader-cap { transition: none; }
+        #workFaderTrack:focus-visible { outline: 2px solid #e8a33d; outline-offset: 4px; }
+
         .pattern-fader-track .track-rail {
             position: absolute;
             left: 0;
@@ -244,7 +458,11 @@
             top: 50%;
             width: 14px;
             height: 32px;
-            transform: translateY(-50%);
+            /* Centred on the value point: `left` positions the cap's MIDDLE
+               (translateX(-50%)), matching the scale labels/ticks, not its
+               left edge. The 7px overhang at −∞/+24 stays inside the strip's
+               14px side padding. */
+            transform: translate(-50%, -50%);
 
             background: linear-gradient(
                 to right,
@@ -444,12 +662,57 @@
             html { scroll-behavior: auto; }
             .rec-dot, .animate-blink, .animate-flicker { animation: none !important; }
             .hero-ended-glow::before, .hero-ended-glow::after { animation: none !important; }
+            .hamburger span { transition: none !important; }
+            #workFaderTrack .fader-cap { transition: none !important; }
             * { transition: none !important; }
         }
     </style>
 </head>
 <body class="bg-stage-black text-tape-cream font-body">
+    <a href="#home" class="skip-link">Skip to content</a>
     <div class="grain-overlay"></div>
+
+    <!-- Hero blob clip-path definitions (referenced by .hero-blob-panel).
+         objectBoundingBox units: the shape scales with the panel's box, so one
+         path serves all sizes within its breakpoint variant. The desktop path
+         hugs: timecode notch up top → wide shoulders at the name → slight waist
+         at the tagline → bulge for the paragraph/buttons → tapered foot at the
+         social icons. The mobile path is taller and narrower with a softer
+         waist, for the stacked layout under 640px. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <defs>
+            <clipPath id="heroBlobDesktop" clipPathUnits="objectBoundingBox">
+                <path d="M0.135,0.085
+                         C0.20,0.030, 0.30,0.012, 0.44,0.020
+                         C0.56,0.026, 0.70,0.020, 0.855,0.075
+                         C0.925,0.105, 0.975,0.185, 0.982,0.285
+                         C0.988,0.375, 0.945,0.435, 0.950,0.520
+                         C0.955,0.605, 0.995,0.645, 0.985,0.735
+                         C0.975,0.830, 0.905,0.900, 0.790,0.938
+                         C0.700,0.968, 0.600,0.986, 0.500,0.988
+                         C0.400,0.990, 0.300,0.972, 0.215,0.940
+                         C0.105,0.898, 0.028,0.828, 0.016,0.732
+                         C0.004,0.640, 0.055,0.600, 0.062,0.515
+                         C0.069,0.430, 0.018,0.370, 0.024,0.280
+                         C0.031,0.180, 0.075,0.115, 0.135,0.085 Z"/>
+            </clipPath>
+            <clipPath id="heroBlobMobile" clipPathUnits="objectBoundingBox">
+                <path d="M0.18,0.03
+                         C0.27,0.008, 0.38,0.0, 0.5,0.006
+                         C0.62,0.012, 0.74,0.025, 0.83,0.05
+                         C0.93,0.078, 0.985,0.14, 0.99,0.23
+                         C0.995,0.32, 0.98,0.41, 0.99,0.5
+                         C1.0,0.6, 0.99,0.69, 0.975,0.78
+                         C0.96,0.87, 0.9,0.925, 0.805,0.95
+                         C0.71,0.975, 0.6,0.99, 0.5,0.996
+                         C0.4,1.002, 0.29,0.99, 0.2,0.96
+                         C0.1,0.928, 0.03,0.875, 0.015,0.79
+                         C0.0,0.705, 0.012,0.615, 0.008,0.525
+                         C0.004,0.435, 0.005,0.345, 0.022,0.26
+                         C0.04,0.175, 0.09,0.052, 0.18,0.03 Z"/>
+            </clipPath>
+        </defs>
+    </svg>
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full bg-stage-black/95 backdrop-blur-md border-b border-reel-border z-50">
@@ -465,8 +728,13 @@
                     <li><a href="#education" class="hover:text-vu-amber transition">Education</a></li>
                     <li><a href="#contact" class="hover:text-vu-amber transition">Contact</a></li>
                 </ul>
-                <button class="md:hidden text-tape-cream" onclick="toggleMobileMenu()" aria-label="Toggle menu">
-                    <i class="fas fa-bars text-xl"></i>
+                <button id="mobileMenuBtn" class="md:hidden text-tape-cream p-2 -m-2" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobileMenu">
+                    <span class="hamburger" aria-hidden="true">
+                        <span class="bar-top"></span>
+                        <span class="mid-a"></span>
+                        <span class="mid-b"></span>
+                        <span class="bar-bottom"></span>
+                    </span>
                 </button>
             </div>
             <div id="mobileMenu" class="hidden md:hidden mt-4 space-y-1 font-mono text-sm uppercase tracking-widest">
@@ -483,18 +751,20 @@
 
     <!-- ============ HERO ============ -->
     <section id="home" class="hero-min-h flex items-center justify-center pt-20 pb-24 relative overflow-hidden">
-        <!-- Background reel video — plays once on load, muted, then fades
-             out to reveal the amber glow layer below. Update the <source>
-             src to match your encoded file's actual path/name, and swap
-             the poster for a real first-frame image once you have one. -->
+        <!-- Background reel video — plays once on load (muted), then fades
+             out to reveal the amber glow layer below. The poster is a real
+             first-frame grab (hero-poster.jpg) so the hero looks finished
+             the instant the page paints; upload it to the R2 bucket next to
+             the reel. preload="metadata" pulls just the header/moov atom
+             (front-loaded by faststart) before committing to the full file. -->
         <!-- Fullscreen shell: the reel is contained 1:1 (never cropped), with a
              live blurred ambient copy of the footage filling the bands that
              would otherwise letterbox black — edge-to-edge without crop. -->
         <div id="heroFsShell" class="hero-fs-shell absolute inset-0 z-0">
             <canvas id="heroAmbient" width="640" height="360" aria-hidden="true"></canvas>
             <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-                autoplay muted playsinline
-                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='100%25' height='100%25' fill='%230c0c0b'/%3E%3Ctext x='50%25' y='50%25' font-family='monospace' font-size='36' fill='%238a6a34' text-anchor='middle' dominant-baseline='middle'%3EAdd your reel video here%3C/text%3E%3C/svg%3E">
+                autoplay muted playsinline preload="metadata"
+                poster="hero-poster.jpg">
                 <source src="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-reel.mp4" type="video/mp4">
             </video>
         </div>
@@ -505,8 +775,12 @@
         <!-- Dark wash over the video so hero text stays readable regardless of footage -->
         <div class="absolute inset-0 z-[1] bg-stage-black/60 pointer-events-none"></div>
 
+        <!-- Bottom melt: the reel gradients into the page background so its lower
+             edge is completely invisible by the time it reaches the waveform -->
+        <div class="hero-bottom-fade" aria-hidden="true"></div>
+
         <div class="container mx-auto px-6 z-10 relative">
-            <div class="w-fit max-w-4xl mx-auto text-center bg-stage-black/50 backdrop-blur-sm rounded-2xl px-6 py-8 sm:px-10 sm:py-10">
+            <div class="hero-blob-panel w-fit max-w-4xl mx-auto text-center bg-stage-black/50 backdrop-blur-sm px-6 py-8 sm:px-12 sm:py-12">
 
                 <!-- Timecode readout -->
                 <div class="flex items-center justify-center gap-3 mb-8 font-mono text-vu-amber text-sm">
@@ -514,6 +788,7 @@
                     <span>TC</span>
                     <span id="timecode" class="timecode-display">00:00:00:00</span>
                     <span class="text-tape-cream-dim">25fps</span>
+                    <span id="bufferIndicator" class="hidden font-mono text-vu-amber/80 tracking-widest" role="status">· BUFFERING ·</span>
                 </div>
 
                 <h1 class="font-display text-5xl sm:text-6xl md:text-8xl tracking-wide mb-4 animate-flicker">
@@ -570,7 +845,7 @@
         </div>
 
         <!-- Ambient waveform, fixed to hero — also acts as the video's visual cutoff at the bottom edge -->
-        <svg class="absolute bottom-0 left-0 w-full h-28 opacity-30 pointer-events-none z-[5]" viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <svg class="absolute bottom-0 left-0 w-full h-28 opacity-30 pointer-events-none z-[5]" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
             <g fill="none" stroke="#e8a33d" stroke-width="2">
                 <path d="M0,60 L20,40 L40,80 L60,30 L80,90 L100,50 L120,70 L140,20 L160,95 L180,45 L200,60 L220,35 L240,85 L260,55 L280,65 L300,25 L320,90 L340,50 L360,70 L380,40 L400,60 L420,30 L440,85 L460,55 L480,65 L500,40 L520,80 L540,30 L560,90 L580,50 L600,70 L620,35 L640,85 L660,55 L680,20 L700,95 L720,45 L740,60 L760,35 L780,85 L800,55 L820,65 L840,25 L860,90 L880,50 L900,70 L920,40 L940,60 L960,30 L980,85 L1000,55 L1020,65 L1040,40 L1060,80 L1080,30 L1100,90 L1120,50 L1140,70 L1160,35 L1180,85 L1200,60" opacity="0.8"/>
             </g>
@@ -583,7 +858,7 @@
 
             <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
                 <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 01</div>
-                <svg class="flex-1 h-7 min-w-0" viewBox="0 0 400 30" preserveAspectRatio="none">
+                <svg class="flex-1 h-7 min-w-0" viewBox="0 0 400 30" preserveAspectRatio="none" aria-hidden="true" focusable="false">
 
             <!-- Boom pole shadow -->
             <line x1="0" y1="16" x2="268" y2="16"
@@ -748,15 +1023,34 @@
 
             <div class="flex flex-wrap items-center gap-4 mb-8 max-w-5xl mx-auto">
                 <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 02</div>
-                <div class="pattern-fader-track flex-1">
-                    <div class="track-rail"></div>
-                    <div class="fader-cap" style="left:58%"></div>
+                <!-- Live fader scrubber — drag it (or use ←/→/Home/End when focused) to move
+                     through the work categories. Fully synced with the filter chips below. -->
+                <div class="fader-strip flex-1 min-w-[180px]">
+                    <div class="fader-scale" aria-hidden="true">
+                        <span style="left:0%">&minus;&infin;</span>
+                        <span style="left:14.2857%">&minus;24</span>
+                        <span style="left:28.5714%">&minus;12</span>
+                        <span style="left:42.8571%">&minus;6</span>
+                        <span class="is-unity" style="left:57.1429%">0</span>
+                        <span style="left:71.4286%">+6</span>
+                        <span style="left:85.7143%">+12</span>
+                        <span style="left:100%">+24</span>
+                    </div>
+                    <div class="fader-ticks" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span>
+                        <span class="is-unity"></span><span></span><span></span><span></span>
+                    </div>
+                    <div class="pattern-fader-track" id="workFaderTrack" role="slider" tabindex="0"
+                        aria-label="Work category scrubber — drag or use arrow keys to browse categories" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0" aria-valuetext="All">
+                        <div class="track-rail"></div>
+                        <div class="fader-cap" id="workFaderCap" style="left:0%"></div>
+                    </div>
                 </div>
                 <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">WORK</h2>
             </div>
 
             <p class="max-w-6xl mx-auto text-tape-cream-dim text-sm mb-8">
-                A collection of projects spanning audio post-production, game audio, composition, recording, and sound design. Filter by category, or explore the full portfolio.
+                A collection of projects spanning audio post-production, game audio, composition, recording, and sound design. Filter by category, or drag the fader above like a scrubber to move through the reel.
             </p>
 
             <!-- Filter bar -->
@@ -1400,7 +1694,7 @@
 
             <span class="text-vu-amber leading-none flex-shrink-0" style="font-family: Georgia, 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols', serif; font-size: 2.25rem;">&#x1D11E;</span>
 
-            <svg class="flex-1 h-6 min-w-0" viewBox="0 0 400 24" preserveAspectRatio="none">
+            <svg class="flex-1 h-6 min-w-0" viewBox="0 0 400 24" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                 <g stroke="#3a372f" stroke-width="1">
                     <line x1="0" y1="2" x2="400" y2="2"/>
                     <line x1="0" y1="7" x2="400" y2="7"/>
@@ -1436,7 +1730,7 @@
 
             <div class="flex flex-wrap items-center gap-4 mb-12 max-w-5xl mx-auto">
                 <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 05</div>
-                <svg class="flex-1 h-6 min-w-0" viewBox="0 0 400 24" preserveAspectRatio="none">
+                <svg class="flex-1 h-6 min-w-0" viewBox="0 0 400 24" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                     <!-- 8-bit / chiptune square wave — game audio -->
                     <path d="M0,18 H40 V6 H80 V18 H120 V6 H160 V18 H200 V6 H240 V18 H280 V6 H320 V18 H360 V6 H400 V18"
                         fill="none" stroke="#e8a33d" stroke-width="3" stroke-linecap="square" vector-effect="non-scaling-stroke"/>
@@ -1564,8 +1858,8 @@
                                 Send Message
                             </button>
                         </form>
-                        <p id="contactSuccess" class="hidden mt-4 text-sm font-mono text-vu-amber">Message sent — thank you, I'll get back to you soon.</p>
-                        <p id="contactError" class="hidden mt-4 text-sm font-mono text-rec-red">Something went wrong sending that — please try again, or email me directly.</p>
+                        <p id="contactSuccess" class="hidden mt-4 text-sm font-mono text-vu-amber" role="status" aria-live="polite">Message sent — thank you, I'll get back to you soon.</p>
+                        <p id="contactError" class="hidden mt-4 text-sm font-mono text-rec-red" role="alert" aria-live="assertive">Something went wrong sending that — please try again, or email me directly.</p>
                     </div>
                 </div>
             </div>
@@ -1649,6 +1943,10 @@
         const heroGlow = document.getElementById('heroEndedGlow');
         const heroFsShell = document.getElementById('heroFsShell');
         const ambientCanvas = document.getElementById('heroAmbient');
+        const bufferIndicator = document.getElementById('bufferIndicator');
+        // NOTE: volume fades are a silent no-op on iOS (volume is read-only
+        // there by platform policy) — unmute snaps to full volume on iPhones.
+        // Platform limitation, not a bug; the fade works as designed elsewhere.
 
         if (heroVideo) {
             // --- Volume fade helper ---
@@ -1759,6 +2057,18 @@
                     videoControls.classList.add('opacity-0', 'pointer-events-none');
                 }
                 if (heroGlow) heroGlow.classList.add('is-visible');
+                if (bufferIndicator) bufferIndicator.classList.add('hidden');
+            }
+
+            // --- Buffering indicator: a quiet on-brand readout when the stream
+            //     can't keep up, instead of a frozen frame looking like a bug.
+            //     `waiting` fires on any decode/network stall; `playing` clears
+            //     it. Never shown once the reel has ended. ---
+            if (bufferIndicator) {
+                heroVideo.addEventListener('waiting', () => {
+                    if (!heroVideo.ended) bufferIndicator.classList.remove('hidden');
+                });
+                heroVideo.addEventListener('playing', () => bufferIndicator.classList.add('hidden'));
             }
 
             heroVideo.addEventListener('ended', () => {
@@ -1784,8 +2094,10 @@
                     // than remembering whatever mute state was left before.
                     heroVideo.muted = true;
                     heroVideo.volume = 1;
-                    unmuteIcon.classList.add('fa-volume-xmark');
-                    unmuteIcon.classList.remove('fa-volume-high');
+                    if (unmuteIcon) {
+                        unmuteIcon.classList.add('fa-volume-xmark');
+                        unmuteIcon.classList.remove('fa-volume-high');
+                    }
                     heroVideo.currentTime = 0;
                     heroVideo.play().catch(() => {});
                 });
@@ -1809,33 +2121,147 @@
             }
         }
 
-        // Mobile menu toggle
-        function toggleMobileMenu() {
-            document.getElementById('mobileMenu').classList.toggle('hidden');
+        // Mobile menu toggle + hamburger → X morph.
+        // .is-open on the button drives the line choreography (see CSS);
+        // aria-expanded keeps the button honest for assistive tech.
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        function setMenuOpen(open) {
+            if (!mobileMenu || !mobileMenuBtn) return;
+            mobileMenu.classList.toggle('hidden', !open);
+            mobileMenuBtn.classList.toggle('is-open', open);
+            mobileMenuBtn.setAttribute('aria-expanded', String(open));
+            // Lock page scroll while the menu overlay is open.
+            document.body.style.overflow = open ? 'hidden' : '';
         }
-        document.querySelectorAll('#mobileMenu a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.getElementById('mobileMenu').classList.add('hidden');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                setMenuOpen(mobileMenu.classList.contains('hidden'));
             });
+        }
+        // Escape closes the menu and returns focus to the button.
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                setMenuOpen(false);
+                mobileMenuBtn.focus();
+            }
+        });
+        // Clicking outside the menu (and not on the button) closes it too.
+        document.addEventListener('click', (e) => {
+            if (mobileMenu && !mobileMenu.classList.contains('hidden')
+                && !mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        });
+        document.querySelectorAll('#mobileMenu a').forEach(link => {
+            link.addEventListener('click', () => setMenuOpen(false));
         });
 
         // Note: the earlier scroll-triggered fade-in was removed. Content is
         // simply visible by default now — no JS/scroll dependency to break.
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // Work section category filter — user-triggered by click, so there's
-        // no scroll-timing or observer dependency; "all" cards show by default.
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('is-active'));
-                btn.classList.add('is-active');
-                const filter = btn.dataset.filter;
-                document.querySelectorAll('.showcase-card').forEach(card => {
+        // ---------- Work section: filter chips + fader scrubber (hybrid) ----------
+        // The fader (restored from the old V2 build) is a real control: drag it
+        // to scrub through the categories, or focus it and use ←/→/Home/End.
+        // The filter chips stay as the click targets. Whichever input is used,
+        // the cap, the active chip and the visible cards all stay in sync.
+        (function () {
+            const faderTrack = document.getElementById('workFaderTrack');
+            const faderCap = document.getElementById('workFaderCap');
+            const filterBtns = Array.from(document.querySelectorAll('#filterBar .filter-btn'));
+            const cards = Array.from(document.querySelectorAll('.showcase-card'));
+            if (!faderTrack || !faderCap || !filterBtns.length || !cards.length) return;
+
+            const STEP_COUNT = filterBtns.length; // 8: All + 7 categories
+            const filterLabels = filterBtns.map(b => b.textContent.trim());
+            const filters = filterBtns.map(b => b.dataset.filter);
+            let currentIndex = 0;
+            let isDragging = false;
+
+            function applyFilter(index) {
+                const filter = filters[index];
+                cards.forEach(card => {
                     const show = filter === 'all' || card.dataset.category === filter;
                     card.style.display = show ? '' : 'none';
                 });
+            }
+
+            function setActiveUI(index) {
+                currentIndex = index;
+                filterBtns.forEach(b => b.classList.toggle('is-active', Number(b.dataset.index) === index));
+                faderCap.style.left = `${(index / (STEP_COUNT - 1)) * 100}%`;
+                faderTrack.setAttribute('aria-valuenow', String(index));
+                faderTrack.setAttribute('aria-valuetext', filterLabels[index] || '');
+                applyFilter(index);
+            }
+
+            function goToStep(index) {
+                setActiveUI(Math.max(0, Math.min(STEP_COUNT - 1, index)));
+            }
+
+            // Chips: stamp data-index (0..7) matching fader stops, then wire clicks.
+            filterBtns.forEach((btn, i) => {
+                btn.dataset.index = String(i);
+                btn.addEventListener('click', () => goToStep(i));
             });
-        });
+
+            // --- Fader drag: live scrubber (pointer events cover mouse + touch) ---
+            function fractionFromEvent(clientX) {
+                const rect = faderTrack.getBoundingClientRect();
+                return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            }
+
+            function onPointerMove(clientX) {
+                const fraction = fractionFromEvent(clientX);
+                faderCap.style.left = `${fraction * 100}%`;
+                const liveIndex = Math.round(fraction * (STEP_COUNT - 1));
+                if (liveIndex === currentIndex) return; // cap moved; snapped step unchanged
+                filterBtns.forEach(b => b.classList.toggle('is-active', Number(b.dataset.index) === liveIndex));
+                faderTrack.setAttribute('aria-valuenow', String(liveIndex));
+                faderTrack.setAttribute('aria-valuetext', filterLabels[liveIndex] || '');
+                applyFilter(liveIndex);
+                currentIndex = liveIndex;
+            }
+
+            function endDrag(clientX) {
+                isDragging = false;
+                faderTrack.classList.remove('is-dragging');
+                goToStep(Math.round(fractionFromEvent(clientX) * (STEP_COUNT - 1)));
+            }
+
+            faderTrack.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                faderTrack.classList.add('is-dragging');
+                try { faderTrack.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ }
+                onPointerMove(e.clientX);
+            });
+            faderTrack.addEventListener('pointermove', (e) => {
+                if (isDragging) onPointerMove(e.clientX);
+            });
+            faderTrack.addEventListener('pointerup', (e) => { if (isDragging) endDrag(e.clientX); });
+            faderTrack.addEventListener('pointercancel', (e) => { if (isDragging) endDrag(e.clientX); });
+
+            // --- Keyboard support — the fader is a real role="slider" control ---
+            faderTrack.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    goToStep(currentIndex + 1);
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    goToStep(currentIndex - 1);
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    goToStep(0);
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    goToStep(STEP_COUNT - 1);
+                }
+            });
+
+            // Initial state — "All" active, cap parked at 0 (matches the HTML).
+            setActiveUI(0);
+        })();
 
         // Smooth scroll for nav links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -1862,7 +2288,8 @@
                 const hours = Math.floor(totalSeconds / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
-                el.textContent = `${pad(hours,2)}:${pad(minutes,2)}:${pad(seconds,2)}:${pad(frames,2)}`;
+                const text = `${pad(hours,2)}:${pad(minutes,2)}:${pad(seconds,2)}:${pad(frames,2)}`;
+                if (el.textContent !== text) el.textContent = text; // 25fps display, 60fps loop — skip redundant writes
                 requestAnimationFrame(tick);
             }
             requestAnimationFrame(tick);
