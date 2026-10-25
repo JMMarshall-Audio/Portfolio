@@ -34,7 +34,7 @@
            curl -LO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-macos-arm64
            chmod +x tailwindcss-macos-arm64
            ./tailwindcss-macos-arm64 -c tailwind.config.js -i tailwind.input.css -o tailwind.css --minify -->
-    <link rel="stylesheet" href="tailwind.css">
+    <link rel="stylesheet" href="assets/css/tailwind.css">
 
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
@@ -126,6 +126,32 @@
         .tag-nowrap { white-space: nowrap; }
         @media (max-width: 359px) {
             .tag-nowrap { white-space: normal; }
+        }
+
+        /* ---------- V1.2.2: stop the blob panel clipping the TC readout ----------
+           The blob clip-path insets ~12% from each edge at the top of the
+           panel (the shoulder curve). The TC row is the widest row inside
+           that curve, and on narrow screens it reached past the blob edge —
+           glyphs clipped ~4–8px each side at 320px (exactly zero slack;
+           measured in-browser across 280–430px). Fix, mobile only:
+             • readout drops to text-xs with tighter gaps — the row goes from
+               209px to ~165px wide, which fits the 0.77-width shoulder band
+               down to 280px viewports (Fold cover screen);
+             • the panel's first and last rows (TC row, social icons) get a
+               10px inner inset as insurance so their content starts past the
+               curve zone and can never touch the clip edge.
+           Desktop (≥640px) is pixel-identical to V1.2.1. */
+        @media (max-width: 639.98px) {
+            .tc-row-dim { font-size: 0.75rem; gap: 0.5rem; }
+            .hero-blob-panel > :first-child,
+            .hero-blob-panel > :last-child { padding-left: 10px; padding-right: 10px; }
+        }
+        /* Extra-shrink tier for cover-screen-width devices (measured +1.2px
+           margin at 280px with the 12px readout — too tight for comfort;
+           the blob's top-right curve is slightly tighter than its left, so
+           the row also nudges down into the wider part of the shoulder). */
+        @media (max-width: 359.98px) {
+            .tc-row-dim { font-size: 0.625rem; margin-top: 10px; }
         }
 
         /* ---------- Hamburger → X morph ----------
@@ -677,6 +703,174 @@
         .text-vu-amber { color: #e8a33d !important; }
         .text-rec-red { color: #c1272d !important; }
 
+        /* ---------- V1.2.2: Protected asset viewer ----------
+           Certification + project files ship ENCRYPTED (AES-256-GCM, format
+           "JMPROT01" — see PROTECTED-FILES.md and tools/encrypt-asset.html).
+           The site fetches the .enc bundle, decrypts it in memory with
+           WebCrypto and renders it here — there is no download button, the
+           source is an in-memory blob URL, and the file at rest is
+           unreadable without the site. Plain CSS (no Tailwind utilities) so
+           the prebuilt tailwind.css never needs regenerating for the viewer.
+           Honest limits: a determined user with devtools can still capture
+           the decrypted bytes — this stops casual downloading, direct-URL
+           grabs and hotlinking, which is what a static site can do. */
+        .pv-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 3000; /* above the grain overlay (999) and nav (50) */
+            display: flex;
+            flex-direction: column;
+            background: rgba(6, 6, 5, 0.94);
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+        }
+        .pv-overlay[hidden] { display: none; }
+        .pv-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 1rem;
+            background: #141310;
+            border-bottom: 1px solid #2b2925;
+            flex-shrink: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .pv-lock { color: #e8a33d; flex-shrink: 0; }
+        .pv-title {
+            flex: 1;
+            min-width: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #a8a294;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .pv-title strong { color: #ede6d6; font-weight: 600; }
+        .pv-badge {
+            flex-shrink: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #0c0c0b;
+            background: #e8a33d;
+            padding: 3px 8px;
+        }
+        .pv-close {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #2b2925;
+            background: transparent;
+            color: #ede6d6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .pv-close:hover { border-color: #e8a33d; color: #e8a33d; }
+        .pv-close:focus-visible { outline: 2px solid #e8a33d; outline-offset: 2px; }
+        .pv-body {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            padding: clamp(8px, 2vw, 24px);
+        }
+        .pv-content {
+            display: flex;
+            width: 100%;
+            min-height: 0;
+            justify-content: center;
+            align-items: center;
+        }
+        .pv-content iframe {
+            width: min(100%, 920px);
+            height: 100%;
+            border: 1px solid #2b2925;
+            background: #161513;
+        }
+        .pv-content video {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            border: 1px solid #2b2925;
+            background: #000;
+        }
+        .pv-content img {
+            max-width: 100%;
+            max-height: 100%;
+            border: 1px solid #2b2925;
+            -webkit-user-drag: none;
+            user-select: none;
+        }
+        .pv-pdf {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+        }
+        .pv-pdf canvas {
+            background: #fff;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+            max-width: 100%;
+            height: auto;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .pv-audio-box {
+            width: min(100%, 520px);
+            background: #161513;
+            border: 1px solid #2b2925;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .pv-audio-box audio { width: 100%; }
+        .pv-status {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #a8a294;
+            user-select: none;
+            -webkit-user-select: none;
+            background: rgba(6, 6, 5, 0.6);
+            z-index: 1;
+        }
+        .pv-status.is-error { color: #c1272d; }
+        .pv-status[hidden] { display: none; }
+        /* Shown only when a protected file fails to open: the direct route. */
+        .pv-contact {
+            text-transform: none;
+            letter-spacing: normal;
+            font-size: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #a8a294;
+        }
+        .pv-contact a { color: #e8a33d; text-decoration: underline; text-underline-offset: 3px; }
+        .pv-contact[hidden] { display: none; }
+
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
             .rec-dot, .animate-blink, .animate-flicker { animation: none !important; }
@@ -689,6 +883,24 @@
     </style>
 </head>
 <body class="bg-stage-black text-tape-cream font-body">
+
+    <!-- No-JS fallback: served only when JavaScript is disabled/failed.
+         The hero and copy below still read fine without JS; everything that
+         genuinely needs it (the reel, certification, the checklist) explains
+         itself here instead of silently vanishing. -->
+    <noscript>
+        <div style="max-width:720px;margin:48px auto;padding:24px;border:1px solid #2b2925;background:#161513;color:#ede6d6;font-family:Georgia,serif;line-height:1.6">
+            <p style="font-family:monospace;letter-spacing:.12em;color:#e8a33d;text-transform:uppercase;margin:0 0 10px">JAVASCRIPT IS OFF</p>
+            <p style="margin:0 0 10px">Most of this site still reads without JavaScript, but some things can't work here:</p>
+            <ul style="margin:0 0 10px;padding-left:20px">
+                <li>The hero reel can't play (it is served encrypted and needs in-browser decryption).</li>
+                <li>The degree certificate can't be opened (same reason).</li>
+                <li>Contact isn't affected — email works fine without it.</li>
+            </ul>
+            <p style="margin:0">Turn JavaScript on to unlock those, or simply email:
+                <a style="color:#e8a33d" href="mailto:JMMarshall.Audio@proton.me">JMMarshall.Audio@proton.me</a></p>
+        </div>
+    </noscript>
     <a href="#home" class="skip-link">Skip to content</a>
     <div class="grain-overlay"></div>
 
@@ -783,10 +995,14 @@
              would otherwise letterbox black — edge-to-edge without crop. -->
         <div id="heroFsShell" class="hero-fs-shell absolute inset-0 z-0">
             <canvas id="heroAmbient" width="640" height="360" aria-hidden="true"></canvas>
+            <!-- V1.2.2: the reel ships ENCRYPTED (hero-reel.mp4.enc, JMPROT01 —
+                 same format as the certificate). The loader below decrypts it
+                 in memory before play; nothing plaintext is ever published.
+                 The poster stays a plain image — it's a publicity frame. -->
             <video id="heroVideo" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
                 muted playsinline preload="metadata"
                 poster="hero-poster.jpg">
-                <source src="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-reel.mp4" type="video/mp4">
+                <source src="https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/hero-reel.mp4.enc" type="video/mp4">
             </video>
             <!-- In-fullscreen loading readout — a twin of the preroll readout.
                  The page-level overlay is a SIBLING of this shell, so it can't
@@ -826,24 +1042,24 @@
              edge is completely invisible by the time it reaches the waveform -->
         <div class="hero-bottom-fade" aria-hidden="true"></div>
 
-        <!-- V1.2.1 preroll — zero-buffering loader. Sits BEHIND the title
-             panel (z-4 under the content layer) so the title and description
-             stay visible while the reel loads; the readout row anchors just
-             below the nav, inside the first viewport on every device (the
-             hero section is taller than the screen on mobile). Doubles as
-             the mid-reel buffering readout: same component, translucent
+        <!-- V1.2.1 preroll — zero-buffering loader. The scrim stays BEHIND the
+             title panel (z-4 under the content layer) so the title and
+             description stay visible while the reel loads. The readout row
+             (bar + label + Play) lives in its OWN layer ABOVE the panel
+             (z-20): crisper, not blurred behind the panel's backdrop, and
+             'watch us roll' is legible the instant the page paints. Doubles
+             as the mid-reel buffering readout: same components, translucent
              scrim (see script). -->
-        <div id="heroPreroll" class="absolute inset-0 z-[4] bg-stage-black transition-opacity duration-500">
-            <div class="absolute inset-x-0 top-24 sm:top-28 flex flex-col items-center gap-3 px-6">
-                <div class="w-52 h-[3px] bg-reel-border overflow-hidden rounded-full" aria-hidden="true">
-                    <div id="prerollBar" class="h-full w-full bg-vu-amber origin-left will-change-transform transition-transform duration-300 ease-linear" style="transform: scaleX(0)"></div>
-                </div>
-                <div class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-tape-cream-dim">
-                    <span class="rec-dot animate-blink"></span>
-                    <span id="prerollLabel" role="status">LOADING HERO_REEL.MOV</span>
-                </div>
-                <button id="prerollPlay" type="button" class="hidden px-6 py-3 btn-amber font-mono text-xs uppercase tracking-widest">Play reel</button>
+        <div id="heroPreroll" class="absolute inset-0 z-[4] bg-stage-black transition-opacity duration-500"></div>
+        <div id="prerollReadout" class="absolute inset-x-0 top-24 sm:top-28 z-20 flex flex-col items-center gap-3 px-6 pointer-events-none transition-opacity duration-500">
+            <div class="w-52 h-[3px] bg-reel-border overflow-hidden rounded-full" aria-hidden="true">
+                <div id="prerollBar" class="h-full w-full bg-vu-amber origin-left will-change-transform transition-transform duration-300 ease-linear" style="transform: scaleX(0)"></div>
             </div>
+            <div class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-tape-cream-dim">
+                <span class="rec-dot animate-blink"></span>
+                <span id="prerollLabel" role="status">LOADING HERO_REEL.MOV</span>
+            </div>
+            <button id="prerollPlay" type="button" class="hidden pointer-events-auto px-6 py-3 btn-amber font-mono text-xs uppercase tracking-widest">Play reel</button>
         </div>
 
         <div class="container mx-auto px-6 z-10 relative">
@@ -854,7 +1070,7 @@
                     <span class="rec-dot animate-blink"></span>
                     <span>TC</span>
                     <span id="timecode" class="timecode-display">00:00:00:00</span>
-                    <span class="text-tape-cream-dim">25fps</span>
+                    <span class="text-tape-cream-dim">60fps</span>
 
                 </div>
 
@@ -876,8 +1092,10 @@
                     <a href="#work" class="px-8 py-3 btn-amber rounded-none">
                         View Work
                     </a>
-                    <a href="cv.pdf" class="px-8 py-3 btn-outline rounded-none">
-                        Download General CV
+                    <!-- The CV lives in the deployed GitHub tree — this
+                             link views it in a new tab. -->
+                    <a href="cv.pdf" target="_blank" rel="noopener" class="px-8 py-3 btn-outline rounded-none">
+                        View CV
                     </a>
                 </div>
 
@@ -1133,142 +1351,20 @@
                 <button class="filter-btn" data-filter="studio">Studio &amp; Sound Design</button>
                 <button class="filter-btn" data-filter="post">Post Production</button>
                 <button class="filter-btn" data-filter="foley">Foley &amp; ADR</button>
-                <button class="filter-btn" data-filter="live">Live Sound</button>
-                <button class="filter-btn" data-filter="sports">Sports Broadcasting</button>
+                <button class="filter-btn" data-filter="music-editing">Music Editing</button>
+                <button class="filter-btn" data-filter="game-sound">Game Sound</button>
                 <button class="filter-btn" data-filter="composition">Composition &amp; Scoring</button>
                 <button class="filter-btn" data-filter="field">Field Recording</button>
             </div>
 
+    <!-- Work grid: rendered from work.js (the publication manifest).
+         A category shows its published projects only; with none approved
+         it shows a WORK IN PROGRESS panel. Drafts stay openable directly
+         via drafts/<id>.html but never surface on the homepage grid. -->
             <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8" id="showcaseGrid">
-
-                <!-- Card: Studio / Dialogue & Sound Design (video) -->
-                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="studio">
-                    <div class="sprocket-strip"></div>
-                    <!--
-                        To embed a real video, replace the placeholder div below with, e.g.:
-                        <div class="aspect-video w-full">
-                            <iframe class="w-full h-full" src="https://www.youtube.com/embed/VIDEO_ID"
-                                title="[Title]" frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen></iframe>
-                        </div>
-                        (Vimeo: src="https://player.vimeo.com/video/VIDEO_ID")
-                    -->
-                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
-                        <i class="fas fa-waveform-lines text-3xl"></i>
-                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
-                    </div>
-                    <div class="sprocket-strip"></div>
-                    <div class="p-6">
-                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №001</div>
-                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Studio &amp; Sound Design</span>
-                        <h3 class="text-lg font-semibold mb-2">[Short Film Title]</h3>
-                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. dialogue edit &amp; sound design for a 12-minute drama short.]</p>
-                    </div>
-                </article>
-
-                <!-- Card: Post Production (video) -->
-                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="post">
-                    <div class="sprocket-strip"></div>
-                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
-                        <i class="fas fa-clapperboard text-3xl"></i>
-                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
-                    </div>
-                    <div class="sprocket-strip"></div>
-                    <div class="p-6">
-                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №002</div>
-                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Post Production</span>
-                        <h3 class="text-lg font-semibold mb-2">[Documentary / Broadcast Title]</h3>
-                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. full post mix for a student documentary, conform through to final delivery.]</p>
-                    </div>
-                </article>
-
-                <!-- Card: Foley & ADR (video) -->
-                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="foley">
-                    <div class="sprocket-strip"></div>
-                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
-                        <i class="fas fa-shoe-prints text-3xl"></i>
-                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
-                    </div>
-                    <div class="sprocket-strip"></div>
-                    <div class="p-6">
-                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №003</div>
-                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Foley &amp; ADR</span>
-                        <h3 class="text-lg font-semibold mb-2">[Foley / ADR Session Title]</h3>
-                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. Foley recording and ADR session for a short animation.]</p>
-                    </div>
-                </article>
-
-                <!-- Card: Live Sound (video) -->
-                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="live">
-                    <div class="sprocket-strip"></div>
-                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
-                        <i class="fas fa-sliders text-3xl"></i>
-                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
-                    </div>
-                    <div class="sprocket-strip"></div>
-                    <div class="p-6">
-                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №004</div>
-                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Live Sound</span>
-                        <h3 class="text-lg font-semibold mb-2">[Live Event / Venue]</h3>
-                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. FOH or monitor engineering for a live event or venue.]</p>
-                    </div>
-                </article>
-
-                <!-- Card: Sports Broadcasting (video) -->
-                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="sports">
-                    <div class="sprocket-strip"></div>
-                    <div class="aspect-video w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim">
-                        <i class="fas fa-tower-broadcast text-3xl"></i>
-                        <span class="font-mono text-xs uppercase tracking-widest">Embed video here</span>
-                    </div>
-                    <div class="sprocket-strip"></div>
-                    <div class="p-6">
-                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №005</div>
-                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Sports Broadcasting</span>
-                        <h3 class="text-lg font-semibold mb-2">[Broadcast / OB Title]</h3>
-                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. audio assist on an outside broadcast or sports coverage.]</p>
-                    </div>
-                </article>
-
-                <!-- Card: Composition & Scoring (audio) -->
-                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="composition">
-                    <div class="sprocket-strip"></div>
-                    <!--
-                        To embed real audio, replace the placeholder div below with, e.g.:
-                        <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
-                            src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/TRACK_ID&color=%23e8a33d&auto_play=false&show_user=true">
-                        </iframe>
-                    -->
-                    <div class="w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim py-10">
-                        <i class="fas fa-music text-3xl"></i>
-                        <span class="font-mono text-xs uppercase tracking-widest">Embed audio here</span>
-                    </div>
-                    <div class="sprocket-strip"></div>
-                    <div class="p-6">
-                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №006</div>
-                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Composition &amp; Scoring</span>
-                        <h3 class="text-lg font-semibold mb-2">[Original Score / Composition]</h3>
-                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. original score composed and mixed for a short animation.]</p>
-                    </div>
-                </article>
-
-                <!-- Card: Field Recording (audio) -->
-                <article class="sprocket-card overflow-hidden card-hover showcase-card" data-category="field">
-                    <div class="sprocket-strip"></div>
-                    <div class="w-full bg-stage-black border-y border-reel-border flex flex-col items-center justify-center gap-2 text-tape-cream-dim py-10">
-                        <i class="fas fa-tree text-3xl"></i>
-                        <span class="font-mono text-xs uppercase tracking-widest">Embed audio here</span>
-                    </div>
-                    <div class="sprocket-strip"></div>
-                    <div class="p-6">
-                        <div class="font-mono text-xs text-tape-cream-dim mb-1">TAPE №007</div>
-                        <span class="inline-block px-2 py-0.5 bg-vu-amber/10 text-vu-amber text-xs font-mono mb-2">Field Recording</span>
-                        <h3 class="text-lg font-semibold mb-2">[Location Recording Title]</h3>
-                        <p class="text-tape-cream-dim text-sm">[Your role — e.g. location sound recording of ambience/atmos for a documentary.]</p>
-                    </div>
-                </article>
-
+                <noscript>
+                    <p class="text-tape-cream-dim text-sm">The project grid needs JavaScript to render. Email JMMarshall.Audio@proton.me if you can't enable it.</p>
+                </noscript>
             </div>
         </div>
     </section>
@@ -1838,12 +1934,15 @@
                         <span class="px-3 py-1.5 border border-reel-border text-sm">Interactive Audio Implementation (Wwise)</span>
                         <span class="px-3 py-1.5 border border-reel-border text-sm">Media Composition &amp; Scoring</span>
                     </div>
-                    <!-- Certification — same affordance as the CV button: a document
-                         link, outline style, shipped as certification.pdf at the site
-                         root next to cv.pdf. Lives inside the degree card since it
-                         certifies exactly this qualification. -->
+                    <!-- Certification — opens the in-site protected viewer.
+                         The certificate ships ENCRYPTED as certification.pdf.enc
+                         (AES-256-GCM, key/format in PROTECTED-FILES.md); the
+                         plain PDF is never published, so the file can only be
+                         read through this page. -->
                     <div class="mt-4 text-center">
-                        <a href="certification.pdf" class="inline-block px-8 py-3 btn-outline rounded-none">View Certification</a>
+                        <button type="button" data-protected="certification.pdf.enc"
+                            data-protected-name="certification.pdf" data-protected-kind="pdf"
+                            class="px-8 py-3 btn-outline rounded-none">View Certification</button>
                     </div>
                 </div>
 
@@ -1972,11 +2071,87 @@
         </div>
     </footer>
 
+    <!-- V1.2.2 Protected viewer — opened by any element with [data-protected].
+         Fetches the encrypted bundle, decrypts in memory (WebCrypto) and shows
+         it view-only: no download button, blob-URL source, right-click and
+         media download menus suppressed inside the overlay. -->
+    <div id="protectedViewer" class="pv-overlay" hidden role="dialog" aria-modal="true"
+        aria-label="Protected document viewer">
+        <div class="pv-header">
+            <i class="fas fa-lock pv-lock" aria-hidden="true"></i>
+            <span class="pv-title"><strong id="pvName">document</strong>&nbsp;·&nbsp;view-only — download is disabled</span>
+            <span class="pv-badge">View only</span>
+            <button id="pvClose" type="button" class="pv-close" aria-label="Close viewer">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="pv-body" id="pvBody">
+            <div class="pv-status" id="pvStatus">
+                <span class="rec-dot animate-blink" aria-hidden="true"></span>
+                <span id="pvStatusText">DECRYPTING FILE…</span>
+            </div>
+            <div class="pv-content" id="pvContent"></div>
+        </div>
+    </div>
+
     <!-- hls.js — adaptive streaming engine for the bad-connection path
          (self-hosted, no CDN dependency; only loaded-then-used when the
          connection measures too slow for the full-quality reel). -->
-    <script src="hls.min.js"></script>
+    <script src="assets/hls/hls.min.js"></script>
+    <!-- Work publication manifest + renderer (drives #showcaseGrid).
+         Loads BEFORE the main script so the filter/fader capture runs on
+         the rendered cards. -->
+    <script src="assets/js/work.js?v=17"></script>
     <script>
+        // V1.2.3 — the encryption key is NOT stored in this file. It lives
+        // on the MacBook master copy and in the Cloudflare key-service
+        // Worker (worker/README.md), and is fetched at runtime by
+        // getKey(), cached for the session in this variable.
+        // Set KEY_SERVICE_URL after deploying the Worker (see
+        // PROTECTED-FILES.md § Key service).
+        // Debug (like ?cap / ?stream=hls): ?keysvc=<url> overrides the key
+        // service endpoint for local testing against a mock (never used in
+        // production — the constant below is the real one).
+        const KEY_SERVICE_URL = (function () {
+            const m = location.search.match(/[?&]keysvc=([^&]+)/);
+            return m ? decodeURIComponent(m[1])
+                : 'https://jm-portfolio-key-service.jmmarshall.workers.dev/key';
+        })();
+        const PROTECTION_KEY = ''; // left empty — do not put a real key here
+        let protectionKeyLoaded = (function () {
+            try { return !!sessionStorage.getItem('jm-media-key'); } catch (e) { return false; }
+        })();
+        // getKey(): resolves to the passphrase string
+        //   1. session cache (fast path, survives page navigation in tab)
+        //   2. KEY_SERVICE_URL (Worker) — if configured
+        //   3. in-file PROTECTION_KEY — legacy/local fallback
+        //   4. rejects with 'no key' → callers show their own failure state
+        async function getKey() {
+            try {
+                const cached = sessionStorage.getItem('jm-media-key');
+                if (cached) return cached;
+            } catch (e) { /* storage blocked — fall through */ }
+            if (KEY_SERVICE_URL) {
+                const res = await fetch(KEY_SERVICE_URL, { credentials: 'omit' });
+                if (res.ok) {
+                    const key = (await res.text()).trim();
+                    if (key) {
+                        try { sessionStorage.setItem('jm-media-key', key); } catch (e) {}
+                        return key;
+                    }
+                }
+                throw new Error('Key service unreachable (HTTP ' + res.status + ')');
+            }
+            if (PROTECTION_KEY) return PROTECTION_KEY;
+            throw new Error('no key available — is the key service deployed and KEY_SERVICE_URL set?');
+        }
+        // Pre-warm: fetch the key as soon as the page loads so the reel and
+        // viewer don't each pay the round-trip. Non-fatal if it fails —
+        // callers retry via getKey() when they need it and surface errors.
+        if (KEY_SERVICE_URL && !protectionKeyLoaded) {
+            getKey().catch(() => {});
+        }
+
         // Contact form — submit via fetch so we can show an inline
         // success/error message instead of navigating away.
         const contactForm = document.getElementById('contactForm');
@@ -2033,6 +2208,7 @@
         const fsQualityNote = document.getElementById('fsQualityNote');
         const ambientCanvas = document.getElementById('heroAmbient');
         const preroll = document.getElementById('heroPreroll');
+        const prerollReadout = document.getElementById('prerollReadout'); // bar + label + Play — one layer above the title panel
         const prerollBar = document.getElementById('prerollBar');
         const prerollLabel = document.getElementById('prerollLabel');
         const prerollPlay = document.getElementById('prerollPlay');
@@ -2170,12 +2346,48 @@
             // readout: `waiting` re-shows it (translucent), `playing` clears
             // it. NOTE: blob fetch needs same-origin or a CORS rule on the
             // R2 bucket (free) — otherwise the fallback path runs.
-            const REEL_BYTES = 71311646; // R2 copy is md5-identical to the master
-            const REEL_SRC = (heroVideo.querySelector('source') || {}).src || '';
+            // V1.2.2: the reel is ENCRYPTED at rest. REEL_SRC points at
+            // hero-reel.mp4.enc (JMPROT01 bundle); the primary path decrypts
+            // it in memory before handing the video a blob URL. The slow-line
+            // fallback streams the HLS ladder, whose segments are AES-128
+            // encrypted (hls.js decrypts natively via the keyed playlists) —
+            // no plaintext reel file exists anywhere public.
+            const REEL_BYTES = 71311700; // size of the .enc bundle on R2
+            // Debug (like ?cap / ?stream=hls): ?reel=local points the loader at
+            // same-directory files instead of the R2 bucket, so the encrypted
+            // reel path can be exercised against local copies before upload.
+            const REEL_SRC = /[?&]reel=local\b/.test(location.search)
+                ? 'hero-reel.mp4.enc'
+                : ((heroVideo.querySelector('source') || {}).src || '');
+            const HLS_MASTER = REEL_SRC.replace('hero-reel.mp4.enc', 'hls/master.m3u8');
+            let blobPathTried = false;
+
+            // Decrypt a JMPROT01 bundle (magic 8 + version 2 + salt 16 + iv 12
+            // + AES-256-GCM ciphertext). Same format as the protected viewer.
+            async function decryptReelBundle(buffer) {
+                const passphrase = await getKey();
+                const bytes = new Uint8Array(buffer);
+                if (bytes.length < 38 || new TextDecoder().decode(bytes.slice(0, 8)) !== 'JMPROT01') {
+                    throw new Error('not a JMPROT01 bundle');
+                }
+                const salt = bytes.slice(10, 26);
+                const iv = bytes.slice(26, 38);
+                const data = bytes.slice(38);
+                const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+                const key = await crypto.subtle.deriveKey(
+                    { name: 'PBKDF2', salt: salt, iterations: 250000, hash: 'SHA-256' },
+                    base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+                );
+                return crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
+            }
             const qualityNote = document.getElementById('qualityNote');
             let hls = null;
             let gateOpen = false;
             let gateTimer = null;
+            let reelStarted = false;  // at least one load path has been kicked off
+            let ladderFailed = false; // the HLS ladder hit a fatal error (e.g. key service refused)
+            let blobRetry = false;    // second blob attempt after the ladder proved unusable
+            let blobRetryCount = 0;   // how many ladder-broken retries have run (max 1)
 
             function bufferedAheadSeconds() {
                 try {
@@ -2197,6 +2409,7 @@
 
             function hidePreroll() {
                 if (preroll) preroll.classList.add('opacity-0', 'pointer-events-none');
+                if (prerollReadout) prerollReadout.classList.add('opacity-0', 'pointer-events-none');
                 if (heroTcRow) heroTcRow.classList.remove('is-hidden'); // TC readout returns once the reel rolls
                 stopStallBar();
                 syncFsBuffer();
@@ -2236,11 +2449,52 @@
                 // Mid-reel visits reuse this overlay with a translucent scrim.
                 // (If Tailwind is ever prebuilt, include bg-stage-black/75.)
                 if (preroll) preroll.classList.replace('bg-stage-black', 'bg-stage-black/75');
-                heroVideo.play().catch(() => {
+                heroVideo.play().catch(e => {
                     // Play refused — hand control to the visitor, never hang.
+                    if (/dbg=1/.test(location.search)) { window.__reel = window.__reel || {}; window.__reel.playErr = (e && (e.name + ': ' + e.message)); }
                     if (prerollLabel) prerollLabel.textContent = 'Tap to roll';
                     syncFsBuffer();
                     if (prerollPlay) prerollPlay.classList.remove('hidden');
+                });
+            }
+
+            // One shared, universal start covers every stuck state:
+            // autoplay refused, paused-mid-reel, or waiting for
+            // the visitor's consent to stream.
+            function startFromTap() {
+                if (prerollPlay) prerollPlay.classList.add('hidden');
+                if (!gateOpen && !gateTimer) {
+                    // A) The source is already usable (e.g. the blob landed
+                    //    but the browser refused autoplay) — a tap is just
+                    //    consent to roll. NEVER re-route to the ladder here:
+                    //    the old code did that and destroyed the working
+                    //    blob source on the tap.
+                    if (reelStarted && heroVideo.readyState >= 1) { openGate(); return; }
+                    // B) The ladder already ran and died (e.g. the HLS key
+                    //    service refused) — be honest instead of looping.
+                    if (ladderFailed) {
+                        if (prerollLabel) prerollLabel.textContent = 'Reel unavailable on this browser · email me for a copy';
+                        return;
+                    }
+                    // C) Nothing loaded yet (data-saver consent, or the blob
+                    //    never landed): start the machinery the visitor opted
+                    //    into. Without MSE support, load the source directly.
+                    descendFromBlob(); return;
+                }
+                // The tap itself is a user gesture, so play() is allowed here.
+                openGate();
+            }
+            if (prerollPlay) {
+                prerollPlay.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    startFromTap();
+                });
+            }
+            if (preroll) {
+                preroll.addEventListener('click', () => {
+                    const pausedForConsent = prerollPlay && !prerollPlay.classList.contains('hidden');
+                    if (!gateOpen && !pausedForConsent) return; // still loading — don't interrupt the download
+                    startFromTap();
                 });
             }
 
@@ -2272,7 +2526,7 @@
                             hls.currentLevel = Number(capMatch[1]); // manual pin: debug only
                         });
                     }
-                    hls.loadSource(REEL_SRC.replace('hero-reel.mp4', 'hls/master.m3u8'));
+                    hls.loadSource(HLS_MASTER); // AES-128-keyed ladder — hls.js fetches enc.key and decrypts segments itself
                     hls.attachMedia(heroVideo);
                     hls.on(Hls.Events.LEVEL_SWITCHED, (evt, data) => {
                         const levels = (hls && hls.levels) || [];
@@ -2281,13 +2535,20 @@
                         syncFsQuality();
                     });
                     hls.on(Hls.Events.ERROR, (evt, data) => {
+                        if (/dbg=1/.test(location.search)) { (window.__reelSteps = window.__reelSteps || []).push('hlsErr@' + performance.now().toFixed(0) + ' fatal=' + data.fatal + ' type=' + data.type + ' det=' + data.details); try { (window.__reelFatals = window.__reelFatals || []).push({ fatal: data.fatal, type: data.type, details: data.details, response: data.response && (data.response.code + '/' + data.response.text) }); } catch (err) { } }
                         if (!data.fatal) return;
+                        if (/dbg=1/.test(location.search)) try { (window.__reelSteps = window.__reelSteps || []).push('fatalHandler@' + performance.now().toFixed(0)); } catch (err) { }
+                        ladderFailed = true; // remembered so a later tap gets an honest error, not a silent loop
                         try { hls.destroy(); } catch (err) { /* already gone */ }
                         hls = null;
                         if (qualityNote) qualityNote.classList.add('hidden');
                         syncFsQuality();
-                        // Degrade to plain MP4 streaming.
-                        if (heroVideo.preload !== 'auto') { heroVideo.preload = 'auto'; heroVideo.load(); }
+                        // Detach the destroyed MediaSource — leaving its blob
+                        // URL on the element made every later load() die with
+                        // MEDIA_ELEMENT_ERROR (black reel, refused play).
+                        heroVideo.removeAttribute('src');
+                        heroVideo.load();
+                        descendFromBlob();
                     });
                 } catch (err) {
                     hls = null;
@@ -2295,14 +2556,57 @@
                 }
             }
 
+            function descendFromBlob() {
+                // One place decides what happens when the primary blob path
+                // bails or the ladder proves unusable. The streaming ladder is
+                // the fallback only while it actually works; once it's known-
+                // broken (or breaks here), retry the full-download blob once
+                // without the slow-line shortcut — it is the only source that
+                // can still play. Past that, surface the honest state instead
+                // of stranding the element on an unusable source.
+                if (/dbg=1/.test(location.search)) try { (window.__reelSteps = window.__reelSteps || []).push('descend@' + performance.now().toFixed(0) + ' ladderFailed=' + ladderFailed + ' blobRetryCount=' + blobRetryCount); } catch (err) { }
+                // Whatever we descend into, the ladder's buffer gate is over.
+                if (gateTimer) { clearInterval(gateTimer); gateTimer = null; }
+                if (window.Hls && Hls.isSupported() && !ladderFailed) { startAdaptiveGate(); return; }
+                if (blobRetryCount >= 1) {
+                    heroVideo.pause(); // park the play-pending state from any earlier dead gate
+                    if (prerollLabel) prerollLabel.textContent = 'Reel unavailable on this browser · email me for a copy';
+                    if (prerollPlay) prerollPlay.classList.remove('hidden');
+                    if (/dbg=1/.test(location.search)) try { (window.__reelSteps = window.__reelSteps || []).push('honest@' + performance.now().toFixed(0)); } catch (err) { }
+                    return;
+                }
+                blobRetryCount = 1;
+                blobRetry = true;
+                if (/dbg=1/.test(location.search)) try { (window.__reelSteps = window.__reelSteps || []).push('retryBlob@' + performance.now().toFixed(0)); } catch (err) { }
+                fetchReelToBlob();
+            }
+
             function startAdaptiveGate() {
-                // Fallback path: stream straight from the source, gated by
-                // buffered seconds (data saver, slow lines, any fetch
-                // failure). Buffer growth → throughput → seconds-ahead target.
+                // Fallback path: stream through the AES-128 HLS ladder (hls.js
+                // decrypts natively), gated by buffered seconds (data saver,
+                // slow lines, any fetch failure). Buffer growth → throughput →
+                // seconds-ahead target.
                 if (gateTimer) { clearInterval(gateTimer); gateTimer = null; }
                 if (prerollLabel) prerollLabel.textContent = 'LOADING HERO_REEL.MOV';
                 if (window.Hls && Hls.isSupported()) {
-                    startHlsSource(); // adaptive ladder: low quality first, ramps up
+                    startHlsSource(); // adaptive ladder: low quality first, ramps up (segments are AES-128 — decrypted by hls.js)
+                } else if (blobPathTried) {
+                    // No hls.js support AND the encrypted bundle already failed:
+                    // there is no plaintext source to fall back to — surface it
+                    // honestly instead of hanging on black.
+                    if (prerollLabel) prerollLabel.textContent = 'Reel unavailable on this browser · email me for a copy';
+                    if (prerollPlay) prerollPlay.classList.remove('hidden');
+                } else if (!window.crypto || !crypto.subtle) {
+                    // No WebCrypto (http:// or ancient browser): the encrypted
+                    // bundle can never be opened and the ladder has no native
+                    // MSE player either — surface it, don't strand on black.
+                    if (prerollLabel) prerollLabel.textContent = 'Reel needs a secure (https) connection';
+                    if (prerollPlay) prerollPlay.classList.remove('hidden');
+                    //
+                    // (V1.2.3 note: the key comes from getKey() — if the key
+                    // service is unreachable, decryptReelBundle() rejects and
+                    // fetchReelToBlob()'s .catch routes to the honest message
+                    // inside the 5s "blob never playable" net below.)
                 } else if (heroVideo.preload !== 'auto') { heroVideo.preload = 'auto'; heroVideo.load(); }
                 const gateStartedAt = performance.now();
                 let lastAhead = 0, lastT = 0, measuredBps = 0;
@@ -2328,12 +2632,18 @@
             }
 
             function fetchReelToBlob() {
-                // Zero-buffering path: download the whole reel once, hand the
-                // video a blob URL, and play from memory. Real progress drives
-                // the preroll bar and label. Falls back to the adaptive gate
-                // if the download is too slow, fails, or never plays.
+                // Zero-buffering path (V1.2.2, encrypted): download the whole
+                // JMPROT01 bundle once, decrypt it in memory with WebCrypto,
+                // and hand the video a plaintext blob URL that exists only in
+                // RAM. Real progress drives the preroll bar and label. Falls
+                // back to the adaptive gate (AES-128 HLS ladder) if the
+                // download is too slow, fails, or never plays.
                 const reelUrl = REEL_SRC || heroVideo.currentSrc;
-                if (!reelUrl || !window.fetch || !window.AbortController) { startAdaptiveGate(); return; }
+                if (!reelUrl || !window.fetch || !window.AbortController || !window.crypto || !crypto.subtle) {
+                    blobPathTried = true;
+                    descendFromBlob();
+                    return;
+                }
                 const controller = new AbortController();
                 let settled = false;
                 const fallback = () => {
@@ -2341,9 +2651,10 @@
                     settled = true;
                     clearTimeout(failsafe);
                     try { controller.abort(); } catch (err) { /* already done */ }
+                    blobPathTried = true;
                     startAdaptiveGate();
                 };
-                const failsafe = setTimeout(fallback, 30000); // never hang on black
+                const failsafe = setTimeout(fallback, 45000); // 71MB + WebCrypto decrypt — generous cap, never hang on black
                 fetch(reelUrl, { signal: controller.signal }).then(res => {
                     if (!res.ok || !res.body) throw new Error('no stream');
                     const total = Number(res.headers.get('Content-Length')) || REEL_BYTES;
@@ -2354,25 +2665,56 @@
                         if (settled) return;
                         if (done) {
                             settled = true;
-                            clearTimeout(failsafe);
-                            if (bytes < total * 0.99) { startAdaptiveGate(); return; } // truncated
-                            try {
-                                heroVideo.src = URL.createObjectURL(new Blob(chunks, { type: 'video/mp4' }));
-                            } catch (err) { startAdaptiveGate(); return; }
-                            heroVideo.load();
-                            const onReady = () => {
-                                heroVideo.removeEventListener('canplay', onReady);
-                                setBufferBars(1);
-                                openGate();
-                            };
-                            heroVideo.addEventListener('canplay', onReady);
-                            // Net: if the blob never becomes playable, stream instead.
-                            setTimeout(() => {
-                                if (!gateOpen) {
+                            // NOTE: the failsafe stays armed through decryption —
+                            // if WebCrypto wedges on the 71MB payload the page
+                            // still escapes to the HLS path instead of hanging.
+                            if (bytes < total * 0.99) { fallback(); return; } // truncated download
+                            setBufferBars(1);
+                            if (prerollLabel) prerollLabel.textContent = 'DECRYPTING REEL…';
+                            Promise.resolve().then(() => {
+                                const blob = new Blob(chunks, { type: 'application/octet-stream' });
+                                chunks.length = 0; // free the encrypted copies before decrypting
+                                return blob.arrayBuffer().then(ab => decryptReelBundle(ab));
+                            }).then(plain => {
+                                if (gateOpen) return;
+                                clearTimeout(failsafe);
+                                // NOTE: keep 'plain' and the object URL alive in
+                                // local vars — a one-shot create + load on a
+                                // temporary expression has been seen in Brave to
+                                // de-register the blob before the media element
+                                // could resolve it (the net below then kicks in,
+                                // so the reel never hangs either way, but this
+                                // removal attempt forces that descent needlessly).
+                                const plainHolder = new Blob([plain], { type: 'video/mp4' }); // anchor in scope
+                                const plainUrl = URL.createObjectURL(plainHolder);
+                                heroVideo.src = plainUrl;
+                                heroVideo.load();
+                                const onReady = () => {
                                     heroVideo.removeEventListener('canplay', onReady);
-                                    startAdaptiveGate();
-                                }
-                            }, 5000);
+                                    setBufferBars(1);
+                                    openGate();
+                                };
+                                heroVideo.addEventListener('canplay', onReady);
+                                if (/dbg=1/.test(location.search)) { (window.__reelSteps = window.__reelSteps || []).push('srcSet@' + performance.now().toFixed(0) + ' plain=' + plain.byteLength); window.__reel = { landed: true, bytes: bytes, total: total, plainSize: plain.byteLength, url: plainUrl }; }
+                                // Net: if the blob never becomes playable, stream instead.
+                                setTimeout(() => {
+                                    if (!gateOpen) {
+                                        if (/dbg=1/.test(location.search)) (window.__reelSteps = window.__reelSteps || []).push('netFired@' + performance.now().toFixed(0) + ' rs=' + heroVideo.readyState + ' err=' + (heroVideo.error && heroVideo.error.message));
+                                        heroVideo.removeEventListener('canplay', onReady);
+                                        heroVideo.removeAttribute('src'); // dead blob URL off the element
+                                        heroVideo.load(); // expose the source elements (HLS is MSE-driven, not source-dependent)
+                                        descendFromBlob();
+                                    }
+                                }, 5000);                            }).catch(() => {
+                                // Decrypt failed (no key / bad bundle). NOTE: fallback()
+                                // is a no-op here — `settled` was already set true above —
+                                // so recover DIRECTLY: kill the failsafe and go to the
+                                // HLS ladder (or the honest error state), never hang.
+                                clearTimeout(failsafe);
+                                if (prerollLabel) prerollLabel.textContent = 'REEL UNAVAILABLE — COULD NOT DECRYPT · email me for a copy';
+                                blobPathTried = true;
+                                descendFromBlob();
+                            });
                             return;
                         }
                         chunks.push(value);
@@ -2385,15 +2727,21 @@
                         lastB = bytes; lastT = now;
                         setBufferBars(Math.min(1, bytes / total));
                         // Slow line: full pre-load would take >20s — stream instead.
-                        if (measuredBps && (total / (measuredBps / 8)) > 20 && bytes < total / 4) {
+                        // Require ≥1.2 s of signal first: an early burst estimate
+                        // (TCP ramping up) must not abort the primary path — its
+                        // abort is what fed the dead-key HLS descent instead.
+                        const elapsed = now - fetchStartedAt;
+                        if (!blobRetry && elapsed > 1200 && measuredBps && (total / (measuredBps / 8)) > 20 && bytes < total / 4) {
                             settled = true;
                             clearTimeout(failsafe);
                             controller.abort();
-                            startAdaptiveGate();
+                            blobPathTried = true;
+                            descendFromBlob();
                             return;
                         }
                         return pump();
                     }).catch(() => fallback());
+                    const fetchStartedAt = performance.now();
                     pump();
                 }).catch(() => fallback());
             }
@@ -2407,17 +2755,15 @@
                 if (conn.saveData || (conn.effectiveType || '').includes('2g')) {
                     // Data saver: don't spend their bytes without consent —
                     // stream on demand instead of pre-loading everything.
-                    if (prerollLabel) prerollLabel.textContent = 'Reel paused · data saver on';
-                    if (prerollPlay) {
-                        prerollPlay.classList.remove('hidden');
-                        prerollPlay.addEventListener('click', () => {
-                            prerollPlay.classList.add('hidden');
-                            openGate();
-                        }, { once: true });
-                    }
+                    if (prerollLabel) prerollLabel.textContent = 'Reel paused — tap to stream · data saver on';
+                    // The button's click is handled by the universal
+                    // startFromTap wiring above (V1.2.3).
+                    if (prerollPlay) prerollPlay.classList.remove('hidden');
                 } else if (forceHls) {
+                    reelStarted = true;
                     startAdaptiveGate(); // skip the blob probe, straight to the adaptive ladder
                 } else {
+                    reelStarted = true;
                     fetchReelToBlob();
                 }
             } else {
@@ -2426,11 +2772,13 @@
             }
 
             // `waiting` fires on any decode/network stall; `playing` clears it.
+            if (/dbg=1/.test(location.search)) heroVideo.addEventListener('error', () => { (window.__reelSteps = window.__reelSteps || []).push('mediaErr@' + performance.now().toFixed(0) + ' code=' + (heroVideo.error && heroVideo.error.code) + ' src=' + heroVideo.currentSrc.slice(0, 30)); });
             heroVideo.addEventListener('waiting', () => {
                 if (heroVideo.ended || !gateOpen || !preroll) return;
                 if (prerollLabel) prerollLabel.textContent = 'LOADING HERO_REEL.MOV';
                 if (heroTcRow) heroTcRow.classList.add('is-hidden');
                 preroll.classList.remove('opacity-0', 'pointer-events-none');
+                if (prerollReadout) prerollReadout.classList.remove('opacity-0');
                 startStallBar();
                 syncFsBuffer();
             });
@@ -2490,15 +2838,26 @@
         // .is-open on the button drives the line choreography (see CSS);
         // aria-expanded keeps the button honest for assistive tech.
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        function setMenuOpen(open) {
-            if (!mobileMenu || !mobileMenuBtn) return;
-            mobileMenu.classList.toggle('hidden', !open);
-            mobileMenuBtn.classList.toggle('is-open', open);
-            mobileMenuBtn.setAttribute('aria-expanded', String(open));
-            // Lock page scroll while the menu overlay is open.
-            document.body.style.overflow = open ? 'hidden' : '';
-        }
+        const mobileMenu = document.getElementById('mobileMenu');            // Shared body scroll lock: locked while EITHER the mobile menu or
+            // the protected viewer overlay is open. Each overlay calls
+            // syncBodyScrollLock() after every open/close so one can't unlock
+            // the page out from under the other (viewer-under-menu edge case).
+            function syncBodyScrollLock() {
+                const viewerOpen = (function () {
+                    const ov = document.getElementById('protectedViewer');
+                    return ov && !ov.hidden;
+                })();
+                const menuOpen = mobileMenu && !mobileMenu.classList.contains('hidden');
+                document.body.style.overflow = (viewerOpen || menuOpen) ? 'hidden' : '';
+            }
+            window.__pvSyncScrollLock = syncBodyScrollLock; // used by the viewer below
+            function setMenuOpen(open) {
+                if (!mobileMenu || !mobileMenuBtn) return;
+                mobileMenu.classList.toggle('hidden', !open);
+                mobileMenuBtn.classList.toggle('is-open', open);
+                mobileMenuBtn.setAttribute('aria-expanded', String(open));
+                syncBodyScrollLock();
+            }
         if (mobileMenuBtn) {
             mobileMenuBtn.addEventListener('click', () => {
                 setMenuOpen(mobileMenu.classList.contains('hidden'));
@@ -2639,11 +2998,11 @@
             });
         });
 
-        // Live 25fps timecode counter
+        // Live 60fps timecode counter
         (function () {
             const el = document.getElementById('timecode');
             if (!el || reduceMotion) return;
-            const fps = 25;
+            const fps = 60;
             const start = Date.now();
             function pad(n, len) { return String(n).padStart(len, '0'); }
             function tick() {
@@ -2654,10 +3013,252 @@
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 const text = `${pad(hours,2)}:${pad(minutes,2)}:${pad(seconds,2)}:${pad(frames,2)}`;
-                if (el.textContent !== text) el.textContent = text; // 25fps display, 60fps loop — skip redundant writes
+                if (el.textContent !== text) el.textContent = text; // skip redundant DOM writes
                 requestAnimationFrame(tick);
             }
             requestAnimationFrame(tick);
+        })();
+
+        // ---------- V1.2.2/1.2.3: Protected asset viewer (view-only, no download) ----------
+        // Certification and project files ship ENCRYPTED (".enc" bundles, format
+        // "JMPROT01": 8-byte magic, uint16 version, 16-byte salt, 12-byte IV,
+        // then AES-256-GCM ciphertext). This page fetches a bundle, derives the
+        // key in memory and renders the result into the viewer overlay — the
+        // plaintext never exists on disk or as a public URL.
+        //
+        // V1.2.3: the key comes from getKey() (session cache → key-service
+        // Worker). No key material lives in this file.
+        (function () {
+            const MAGIC = 'JMPROT01';
+            const MIME_BY_EXT = {
+                pdf: 'application/pdf',
+                mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm',
+                mp3: 'audio/mpeg', m4a: 'audio/mp4', wav: 'audio/wav', aif: 'audio/aiff', aiff: 'audio/aiff',
+                jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif'
+            };
+
+            const overlay   = document.getElementById('protectedViewer');
+            const nameEl    = document.getElementById('pvName');
+            const statusEl  = document.getElementById('pvStatus');
+            const statusTxt = document.getElementById('pvStatusText');
+            const contentEl = document.getElementById('pvContent');
+            const closeBtn  = document.getElementById('pvClose');
+            if (!overlay || !contentEl) return; // viewer markup missing — degrade silently
+
+            let blobUrl = null;      // revoked on close
+            let lastTrigger = null;  // focus restored here on close
+
+            // --- PDF.js, lazy-loaded ONLY when a PDF is opened (self-hosted
+            //     assets/pdfjs/pdf.min.mjs, same pattern as hls.min.js). Rendering to
+            //     canvas instead of the browser's native viewer means: no
+            //     download/print toolbar on ANY browser, no text layer (the
+            //     certificate can't be selected or copied), and it works from
+            //     in-memory bytes — which some sandboxed browsers refuse to
+            //     hand to the native PDF plugin. ---
+            let pdfJsPromise = null;
+            function loadPdfJs() {
+                if (!pdfJsPromise) {
+                    // The race guards against a wedged load (rare, but seen in
+                    // sandboxed browsers): if the module hasn't landed in 8s,
+                    // reject so the viewer falls back to the native iframe.
+                    pdfJsPromise = Promise.race([
+                        import('./assets/pdfjs/pdf.min.mjs').then((mod) => {
+                            mod.GlobalWorkerOptions.workerSrc = 'assets/pdfjs/pdf.worker.min.mjs';
+                            return mod;
+                        }),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('pdf.js did not load')), 8000))
+                    ]);
+                    pdfJsPromise.catch(() => { pdfJsPromise = null; });
+                }
+                return pdfJsPromise;
+            }
+
+            async function renderPdfPages(pdfjs, plain, wrap) {
+                const data = new Uint8Array(plain.slice(0)); // copy — getDocument transfers the buffer
+                const doc = await pdfjs.getDocument({ data: data, isEvalSupported: false }).promise;
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                for (let n = 1; n <= doc.numPages; n++) {
+                    if (!wrap.isConnected) return; // viewer closed mid-render
+                    const page = await doc.getPage(n);
+                    const base = page.getViewport({ scale: 1 });
+                    const fit = Math.max(Math.min((wrap.clientWidth - 32) / base.width, 1.6), 0.2);
+                    const viewport = page.getViewport({ scale: fit });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.floor(viewport.width * dpr);
+                    canvas.height = Math.floor(viewport.height * dpr);
+                    canvas.style.width = Math.floor(viewport.width) + 'px';
+                    const params = { canvasContext: canvas.getContext('2d'), viewport: viewport };
+                    if (dpr !== 1) params.transform = [dpr, 0, 0, dpr, 0, 0];
+                    await page.render(params).promise;
+                    wrap.appendChild(canvas);
+                }
+            }
+
+            function extOf(url) {
+                const path = url.split('?')[0].split('#')[0];
+                const file = path.substring(path.lastIndexOf('/') + 1).replace(/\.enc$/i, '');
+                const ext = file.includes('.') ? file.split('.').pop().toLowerCase() : '';
+                return { file, ext };
+            }
+
+            // Every failure of a protected file (certificate, reel, project
+            // media) gets the same fallback: the file may be missing from
+            // the host, but Joseph still has it — so offer to send it.
+            let contactEl = null;
+            function showStatus(text, isError) {
+                statusEl.classList.toggle('is-error', !!isError);
+                statusTxt.textContent = text;
+                if (!contactEl) {
+                    contactEl = document.createElement('div');
+                    contactEl.className = 'pv-contact';
+                    contactEl.innerHTML = 'Need this file? <a href="mailto:JMMarshall.Audio@proton.me">Email me</a> and I\'ll send it over.';
+                    statusEl.appendChild(contactEl);
+                }
+                contactEl.hidden = !isError; // gone again the moment anything loads
+                statusEl.hidden = false;
+            }
+
+            function hideStatus() { statusEl.hidden = true; }
+
+            async function decryptBundle(url) {
+                if (!window.crypto || !crypto.subtle) {
+                    throw new Error('This viewer needs a secure (https) connection.');
+                }
+                const passphrase = await getKey();
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Could not fetch the file (HTTP ' + res.status + ').');
+                const bytes = new Uint8Array(await res.arrayBuffer());
+                if (bytes.length < 38) throw new Error('File is too small to be a protected bundle.');
+                const magic = new TextDecoder().decode(bytes.slice(0, 8));
+                if (magic !== MAGIC) throw new Error('This file is not encrypted for this site (or the format/key has moved on).');
+                const version = (bytes[8] << 8) | bytes[9];
+                if (version !== 1) throw new Error('Unknown bundle version ' + version + '.');
+                const salt = bytes.slice(10, 26);
+                const iv   = bytes.slice(26, 38);
+                const data = bytes.slice(38);
+                const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+                const key = await crypto.subtle.deriveKey(
+                    { name: 'PBKDF2', salt: salt, iterations: 250000, hash: 'SHA-256' },
+                    base,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['decrypt']
+                );
+                return crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data); // ArrayBuffer (plaintext)
+            }
+
+            function render(plain, mime, kind) {
+                blobUrl = URL.createObjectURL(new Blob([plain], { type: mime }));
+                contentEl.textContent = '';
+                let node;
+                if (kind === 'video') {
+                    node = document.createElement('video');
+                    node.controls = true; node.autoplay = true; node.playsInline = true;
+                    node.setAttribute('controlslist', 'nodownload noplaybackrate');
+                    node.setAttribute('disablepictureinpicture', '');
+                    node.src = blobUrl;
+                } else if (kind === 'audio') {
+                    const box = document.createElement('div');
+                    box.className = 'pv-audio-box';
+                    node = document.createElement('audio');
+                    node.controls = true; node.autoplay = true;
+                    node.setAttribute('controlslist', 'nodownload noplaybackrate');
+                    node.src = blobUrl;
+                    box.appendChild(node);
+                    node = box;
+                } else if (kind === 'image') {
+                    node = document.createElement('img');
+                    node.draggable = false; node.alt = nameEl.textContent || 'Protected image';
+                    node.src = blobUrl;
+                } else if (kind === 'pdf') {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'pv-pdf';
+                    node = wrap;
+                    loadPdfJs()
+                        .then((pdfjs) => renderPdfPages(pdfjs, plain, wrap))
+                        .catch(() => {
+                            // PDF.js couldn't load → fall back to the native
+                            // inline viewer (real browsers render blob PDFs
+                            // fine; #toolbar=0 hides its download button on
+                            // Chromium).
+                            const f = document.createElement('iframe');
+                            f.title = nameEl.textContent || 'Protected document';
+                            f.src = blobUrl + '#toolbar=0&navpanes=0';
+                            wrap.replaceWith(f);
+                        });
+                } else { // anything else the browser can render inline
+                    node = document.createElement('iframe');
+                    node.title = nameEl.textContent || 'Protected document';
+                    node.src = blobUrl;
+                }
+                contentEl.appendChild(node);
+            }
+
+            async function open(url, opts) {
+                opts = opts || {};
+                const info = extOf(url);
+                const kind = opts.kind || (info.ext === 'pdf' ? 'pdf'
+                    : ['mp4','m4v','mov','webm'].includes(info.ext) ? 'video'
+                    : ['mp3','m4a','wav','aif','aiff'].includes(info.ext) ? 'audio'
+                    : ['jpg','jpeg','png','webp','gif'].includes(info.ext) ? 'image' : 'pdf');
+                const mime = MIME_BY_EXT[info.ext] || 'application/octet-stream';
+                nameEl.textContent = opts.name || info.file || 'document';
+                lastTrigger = document.activeElement;
+                if (!overlay.hidden) { return; } // a file is already open — ignore re-entry
+                overlay.hidden = false;
+                if (window.__pvSyncScrollLock) window.__pvSyncScrollLock(); else document.body.style.overflow = 'hidden';
+                contentEl.textContent = '';
+                showStatus('FETCHING + DECRYPTING FILE…', false);
+                closeBtn.focus();
+                try {
+                    const plain = await decryptBundle(url);
+                    render(plain, mime, kind);
+                    hideStatus();
+                } catch (err) {
+                    const detail = (err && err.message) || (err && err.name) || 'unknown error';
+                    showStatus('COULD NOT OPEN — ' + detail, true);
+                }
+            }
+
+            function close() {
+                contentEl.querySelectorAll('video, audio').forEach(m => { try { m.pause(); } catch (e) {} });
+                contentEl.textContent = '';
+                if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
+                overlay.hidden = true;
+                if (window.__pvSyncScrollLock) window.__pvSyncScrollLock(); else document.body.style.overflow = '';
+                if (lastTrigger && lastTrigger.focus) lastTrigger.focus();
+                lastTrigger = null;
+            }
+
+            closeBtn.addEventListener('click', close);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !overlay.hidden) close();
+                // Minimal focus trap: Tab cycles inside the overlay so
+                // keyboard users can't Tab into the page behind the modal.
+                if (e.key === 'Tab' && !overlay.hidden) {
+                    const focusables = overlay.querySelectorAll('button, video, audio, [tabindex]:not([tabindex="-1"])');
+                    if (!focusables.length) return;
+                    const first = focusables[0], last = focusables[focusables.length - 1];
+                    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+                }
+            });
+            // Deterrents only — right-click / selection inside the overlay.
+            overlay.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // Any element with [data-protected] opens the viewer instead of
+            // navigating. data-protected = the .enc URL (site root or the R2
+            // bucket — both work), data-protected-name = display filename,
+            // data-protected-kind = pdf|video|audio|image (optional).
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('[data-protected]');
+                if (!trigger) return;
+                e.preventDefault();
+                open(trigger.getAttribute('data-protected'), {
+                    kind: trigger.getAttribute('data-protected-kind') || null,
+                    name: trigger.getAttribute('data-protected-name') || null
+                });
+            });
         })();
     </script>
 </body>
