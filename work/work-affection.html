@@ -86,7 +86,11 @@
             position: relative;
             background: #161513;
             border: 1px solid #2b2925;
-            overflow-wrap: anywhere;
+            /* V-1.3.3-a: was `anywhere`, which let flex-squeezed label words like
+               Mastering / Performers split mid-word. `break-word` only splits a
+               word when nothing else fits, and the credit rows below now stack
+               above sm so labels get full width on phones anyway. */
+            overflow-wrap: break-word;
         }
         .sprocket-strip {
             width: 100%;
@@ -409,7 +413,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <!-- Reference strategy --><article class="sprocket-card card-hover p-6 journal-card">
+                    <!-- Reference strategy --><article class="sprocket-card card-hover p-4 sm:p-6 journal-card">
     <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Reference tracks</p>
                         <h3 class="text-lg font-semibold mb-3">Four references, each picked for a target</h3>
                         <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
@@ -426,7 +430,7 @@
                         </ul>
                     </article>
 
-                    <!-- Gain staging & hygiene --><article class="sprocket-card card-hover p-6 journal-card">
+                    <!-- Gain staging & hygiene --><article class="sprocket-card card-hover p-4 sm:p-6 journal-card">
     <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Gain staging</p>
                         <h3 class="text-lg font-semibold mb-3">Cleaning and levelling the session first</h3>
                         <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
@@ -442,7 +446,7 @@
                     </article>
 
                     <!-- Bass amp re-amp (tag-bass) -->
-                    <article class="sprocket-card card-hover p-6 journal-card tag-bass">
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-bass">
                         <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Bass</p>
                         <h3 class="text-lg font-semibold mb-3">Re-amping the bass, virtually</h3>
 
@@ -480,7 +484,7 @@
                     </article>
 
                     <!-- Guitar solo (tag-solo) -->
-                    <article class="sprocket-card card-hover p-6 journal-card tag-solo">
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-solo">
                         <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Guitar solo</p>
                         <h3 class="text-lg font-semibold mb-3">Smoothness for the guitar solo</h3>
 
@@ -509,7 +513,7 @@
                     </article>
 
                     <!-- Tape samples (tag-tape) -->
-                    <article class="sprocket-card card-hover p-6 journal-card tag-tape">
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-tape">
                         <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Tape samples</p>
                         <h3 class="text-lg font-semibold mb-3">Bedding in the tape samples</h3>
 
@@ -532,7 +536,7 @@
                     </article>
 
                     <!-- Bus treatments (tag-bus) -->
-                    <article class="sprocket-card card-hover p-6 journal-card tag-bus">
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-bus">
                         <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Bus treatment</p>
                         <h3 class="text-lg font-semibold mb-3">Three aux buses and a mixbus</h3>
                         <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
@@ -649,62 +653,62 @@
         <div class="container mx-auto px-6">
             <div class="max-w-5xl mx-auto">
                 <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="sprocket-card p-6 journal-card">
+                    <div class="sprocket-card p-4 sm:p-6 journal-card">
                         <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-4">Credits</p>
                         <div class="space-y-3 text-sm">
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Context</span>
-                                <span class="text-tape-cream text-right">University mix assignment — unmastered</span>
+                                <span class="text-tape-cream text-left sm:text-right">University mix assignment — unmastered</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Artist / Songwriting / Performance</span>
-                                <span class="text-tape-cream text-right">Toby Bain</span>
+                                <span class="text-tape-cream text-left sm:text-right">Toby Bain</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Mix</span>
-                                <span class="text-vu-amber text-right">Joseph Marshall</span>
+                                <span class="text-vu-amber text-left sm:text-right">Joseph Marshall</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Mastering</span>
-                                <span class="text-tape-cream text-right">Not yet mastered — mix exhibited as-delivered</span>
+                                <span class="text-tape-cream text-left sm:text-right">Not yet mastered — mix exhibited as-delivered</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Original release (April 2026)</span>
-                                <span class="text-tape-cream text-right">Recorded by Rob Quickenden at Ford Lane Studios · released mix by Max Fletcher</span>
+                                <span class="text-tape-cream text-left sm:text-right">Recorded by Rob Quickenden at Ford Lane Studios · released mix by Max Fletcher</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="sprocket-card p-6 journal-card">
+                    <div class="sprocket-card p-4 sm:p-6 journal-card">
                         <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-4">Monitoring</p>
                         <div class="space-y-3 text-sm">
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Speakers</span>
-                                <span class="text-tape-cream text-right">KRK Classic 5</span>
+                                <span class="text-tape-cream text-left sm:text-right">KRK Classic 5</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Headphones</span>
-                                <span class="text-tape-cream text-right">Sennheiser HD 206</span>
+                                <span class="text-tape-cream text-left sm:text-right">Sennheiser HD 206</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Calibration</span>
-                                <span class="text-tape-cream text-right">Sonarworks SoundID Reference</span>
+                                <span class="text-tape-cream text-left sm:text-right">Sonarworks SoundID Reference</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Work commissioned</span>
-                                <span class="text-tape-cream text-right">University assignment</span>
+                                <span class="text-tape-cream text-left sm:text-right">University assignment</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Performers</span>
-                                <span class="text-tape-cream text-right">Toby Bain — guitar, synth & tape loops · David Kelly — bass · Simon Stewart — drums · Sam Salkeld — guitar solo</span>
+                                <span class="text-tape-cream text-left sm:text-right">Toby Bain — guitar, synth & tape loops · David Kelly — bass · Simon Stewart — drums · Sam Salkeld — guitar solo</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Demo recordings</span>
-                                <span class="text-tape-cream text-right">Matt Wagstaff (drums), Oliver Clarke-Walker (engineering), Poppy Humphries</span>
+                                <span class="text-tape-cream text-left sm:text-right">Matt Wagstaff (drums), Oliver Clarke-Walker (engineering), Poppy Humphries</span>
                             </div>
-                            <div class="flex justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
                                 <span class="text-tape-cream-dim">Verification</span>
-                                <span class="text-tape-cream text-right">Stereo &amp; mono, loud/quiet, in-room</span>
+                                <span class="text-tape-cream text-left sm:text-right">Stereo &amp; mono, loud/quiet, in-room</span>
                             </div>
                         </div>
                     </div>
@@ -743,7 +747,7 @@
 
                 <div class="max-w-4xl space-y-6">
 
-                    <article class="sprocket-card journal-card p-6">
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
                         <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Overall aim</p>
                         <p class="text-tape-cream-dim text-sm leading-relaxed">
                             The song asked for a relaxed atmosphere — closer in feel to cool jazz / hard bop
@@ -753,7 +757,7 @@
                         </p>
                     </article>
 
-                    <article class="sprocket-card journal-card p-6">
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
                         <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">On working with the artist</p>
                         <p class="text-tape-cream-dim text-sm leading-relaxed">
                             Reference choice included a discussion-with-the-client step: a Sound on Sound
@@ -766,7 +770,7 @@
                         </p>
                     </article>
 
-                    <article class="sprocket-card journal-card p-6">
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
                         <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Verification</p>
                         <p class="text-tape-cream-dim text-sm leading-relaxed">
                             Critical listening in stereo and mono, at normal, louder and quieter levels,
@@ -775,7 +779,7 @@
                         </p>
                     </article>
 
-                    <article class="sprocket-card journal-card p-6">
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
                         <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Workflow, in three passes</p>
                         <ol class="text-tape-cream-dim text-sm leading-relaxed space-y-2 list-decimal list-inside">
                             <li><strong class="text-tape-cream">Cleanup:</strong> listen through, organise folders/auxes, rough mix, then remove resonances and cut unneeded high/low content on every track.</li>
@@ -784,7 +788,7 @@
                         </ol>
                     </article>
 
-                    <article class="sprocket-card journal-card p-6">
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
                         <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Research Sources</p>
                         <ul class="text-tape-cream-dim text-sm leading-relaxed space-y-1">
                             <li>Morley, D. (2021) <em>Mix Management</em>, Sound on Sound.</li>
