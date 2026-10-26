@@ -530,12 +530,23 @@
            no visible seam, with a slow, low-amplitude amber glow so the
            hero doesn't go visually dead once the reel finishes — kept
            subtle deliberately so it doesn't compete with page content. */
-        /* V1.2.1 mobile fix: the preroll readout anchors at nearly the same
-           y as the hero's own TC row, so at narrow widths the two mono rows
-           print on top of each other. Fade the TC row out while the preroll
-           overlay is up and crossfade it back once the reel rolls. */
+        /* V-1.3.2-a change: the TC row stays visible for the whole hero
+           lifecycle now — it reads 00:00:00:00 while the reel loads, then
+           follows the picture once it rolls. The .is-hidden toggle is kept
+           only as a no-op for the existing hidePreroll() removal call. */
         .tc-row-dim { transition: opacity 0.5s ease; }
         .tc-row-dim.is-hidden { opacity: 0; }
+        /* With the TC row permanently visible (V-1.3.2-a), the loading readout
+           must sit clear of it: measured overlaps of −15px at 375px (readout
+           at 6rem) and −9px at 1280px (readout at 7rem) — both when the
+           preroll readout is up. These overrides keep it below the fixed nav
+           and clear of the TC row at every width. */
+        @media (max-width: 639.98px) {
+            #prerollReadout { top: 4.75rem; }
+        }
+        @media (min-width: 640px) {
+            #prerollReadout { top: 6rem; }
+        }
         /* Invisible +8px hit-area extender for small icon links (mobile
            tap-target comfort) — no layout shift, glyphs stay put. */
         .tap-expand { position: relative; }
@@ -1838,6 +1849,18 @@
                     </span>
 
                     <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        Loudness Range Metering (LRA)
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        48 kHz / 24-bit Delivery
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
+                        AAF / OMF / XML Interchange
+                    </span>
+
+                    <span class="px-3 py-1.5 border border-reel-border text-sm">
                         Audio Delivery &amp; Quality Control
                     </span>
 
@@ -1880,7 +1903,7 @@
         <div class="max-w-4xl mx-auto">
             <div class="sprocket-card p-6 flex items-center justify-between">
                 <p class="text-tape-cream-dim text-lg">
-                    Academic and professional references available upon request.
+                    Academic and professional references — University of Chichester faculty who supervised my projects, and industry colleagues — are available on request.
                 </p>
 
                 <a href="mailto:JMMarshall.Audio@proton.me" 
@@ -2050,8 +2073,8 @@
     <footer class="py-8 border-t border-reel-border">
         <div class="container mx-auto px-6 text-center">
             <div class="mb-4 text-lg">
-                <a href="mailto:JMMarshall.Audio@proton.me" class="tap-expand mx-2 hover:text-vu-amber transition"><i class="fas fa-envelope"></i></a>
-                <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="tap-expand mx-2 hover:text-vu-amber transition"><i class="fab fa-linkedin"></i></a>
+                <a href="mailto:JMMarshall.Audio@proton.me" class="tap-expand mx-2 hover:text-vu-amber transition" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="tap-expand mx-2 hover:text-vu-amber transition" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                 <!-- SoundCloud
                 <a href="https://soundcloud.com/jmmarshall-audio" target="_blank" rel="noopener" class="mx-2 hover:text-vu-amber transition">
                     <i class="fab fa-soundcloud"></i>
@@ -2067,6 +2090,11 @@
             </div>
             <p class="text-tape-cream-dim text-xs font-mono">
                 © 2026 JOSEPH MARSHALL
+            </p>
+            <p class="text-tape-cream-dim text-xs font-mono max-w-2xl mx-auto mt-3 leading-relaxed" style="opacity:.65">
+                This website was built with the assistance of AI.
+                All information, descriptions and project details on it were personally compiled and verified by me, and are truthful to the best of my knowledge.
+                All media and previous works shown were made entirely without AI — written, recorded, edited and mixed by hand.
             </p>
         </div>
     </footer>
@@ -2356,10 +2384,17 @@
             // Debug (like ?cap / ?stream=hls): ?reel=local points the loader at
             // same-directory files instead of the R2 bucket, so the encrypted
             // reel path can be exercised against local copies before upload.
-            const REEL_SRC = /[?&]reel=local\b/.test(location.search)
-                ? 'hero-reel.mp4.enc'
-                : ((heroVideo.querySelector('source') || {}).src || '');
-            const HLS_MASTER = REEL_SRC.replace('hero-reel.mp4.enc', 'hls/master.m3u8');
+            // ?reel=<absolute-url-encoded> points it at any URL (e.g. a local
+            // throttling proxy) while the HLS ladder stays pinned to the real
+            // playlist — same escape shape as ?keysvc=. Never used in production.
+            const DEFAULT_REEL_SRC = (heroVideo.querySelector('source') || {}).src || '';
+            const reelParam = (location.search.match(/[?&]reel=([^&]+)/) || [])[1];
+            const REEL_SRC = !reelParam ? DEFAULT_REEL_SRC
+                : reelParam === 'local' ? 'hero-reel.mp4.enc'
+                : decodeURIComponent(reelParam);
+            const HLS_MASTER = (reelParam && reelParam !== 'local')
+                ? DEFAULT_REEL_SRC.replace('hero-reel.mp4.enc', 'hls/master.m3u8')
+                : REEL_SRC.replace('hero-reel.mp4.enc', 'hls/master.m3u8');
             let blobPathTried = false;
 
             // Decrypt a JMPROT01 bundle (magic 8 + version 2 + salt 16 + iv 12
@@ -2646,10 +2681,27 @@
                 }
                 const controller = new AbortController();
                 let settled = false;
+                let stallWatch = null;
+                // Escape helper: one place that settles the blob attempt and
+                // routes to the ladder (or, once the ladder is known-broken,
+                // the blob retry / honest error). Every escape clears BOTH
+                // timers — the failsafe and the stall watchdog — but never
+                // leaves a stale one behind.
+                const escapeToLadder = (reason) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(failsafe);
+                    if (stallWatch) { clearInterval(stallWatch); stallWatch = null; }
+                    if (/dbg=1/.test(location.search)) (window.__reelSteps = window.__reelSteps || []).push('escape@' + performance.now().toFixed(0) + ' ' + reason);
+                    try { controller.abort(); } catch (err) { /* already done */ }
+                    blobPathTried = true;
+                    descendFromBlob();
+                };
                 const fallback = () => {
                     if (settled) return;
                     settled = true;
                     clearTimeout(failsafe);
+                    if (stallWatch) { clearInterval(stallWatch); stallWatch = null; }
                     try { controller.abort(); } catch (err) { /* already done */ }
                     blobPathTried = true;
                     startAdaptiveGate();
@@ -2676,8 +2728,9 @@
                                 chunks.length = 0; // free the encrypted copies before decrypting
                                 return blob.arrayBuffer().then(ab => decryptReelBundle(ab));
                             }).then(plain => {
-                                if (gateOpen) return;
+                        if (gateOpen) return;
                                 clearTimeout(failsafe);
+                                if (stallWatch) { clearInterval(stallWatch); stallWatch = null; }
                                 // NOTE: keep 'plain' and the object URL alive in
                                 // local vars — a one-shot create + load on a
                                 // temporary expression has been seen in Brave to
@@ -2711,6 +2764,7 @@
                                 // so recover DIRECTLY: kill the failsafe and go to the
                                 // HLS ladder (or the honest error state), never hang.
                                 clearTimeout(failsafe);
+                                if (stallWatch) { clearInterval(stallWatch); stallWatch = null; }
                                 if (prerollLabel) prerollLabel.textContent = 'REEL UNAVAILABLE — COULD NOT DECRYPT · email me for a copy';
                                 blobPathTried = true;
                                 descendFromBlob();
@@ -2720,6 +2774,7 @@
                         chunks.push(value);
                         bytes += value.byteLength;
                         const now = performance.now();
+                        lastProgBytes = bytes; lastProgT = now;   // feeds the stall watchdog
                         if (lastT) {
                             const instBps = ((bytes - lastB) * 8) / ((now - lastT) / 1000);
                             measuredBps = measuredBps ? measuredBps * 0.5 + instBps * 0.5 : instBps;
@@ -2732,24 +2787,51 @@
                         // abort is what fed the dead-key HLS descent instead.
                         const elapsed = now - fetchStartedAt;
                         if (!blobRetry && elapsed > 1200 && measuredBps && (total / (measuredBps / 8)) > 20 && bytes < total / 4) {
-                            settled = true;
-                            clearTimeout(failsafe);
-                            controller.abort();
-                            blobPathTried = true;
-                            descendFromBlob();
+                            escapeToLadder('slowEarly bytes=' + bytes);
+                            return;
+                        }
+                        // V-1.3.2-a late re-check: the early check runs once and
+                        // trusts the burst-rate estimate, so a pipe that starts
+                        // fast (TCP burst sustains >28 Mbps for the first MBs)
+                        // and then throttles strands the visitor mid-download
+                        // — bar frozen near 25%, LOADING for 40s+ until the
+                        // failsafe (observed on a real load). After 8s the EMA
+                        // rate reflects the real pipe; if the remaining
+                        // download still projects >25s, switch to the HLS
+                        // ladder, which starts playing from the first
+                        // decrypted segment.
+                        if (!blobRetry && measuredBps && bytes < total && elapsed > 8000 &&
+                            ((total - bytes) / (measuredBps / 8)) > 25) {
+                            escapeToLadder('slowLate bytes=' + bytes);
                             return;
                         }
                         return pump();
                     }).catch(() => fallback());
                     const fetchStartedAt = performance.now();
+                    let lastProgBytes = 0, lastProgT = fetchStartedAt;
                     pump();
+                    // V-1.3.2-a stall watchdog: pump() only advances when the
+                    // stream yields a chunk — if the connection stalls
+                    // outright (collapsed TCP window, dead middlebox),
+                    // no per-chunk check can ever run and the only escape
+                    // was the 45s failsafe (observed: bar frozen at ~25%,
+                    // LOADING for 40s+). A tick that runs outside the reader
+                    // notices bytes not moving and escapes early; the
+                    // per-chunk slow checks above still handle mere slow
+                    // declines. Fires only when ≥10s pass with zero byte flow.
+                    stallWatch = setInterval(() => {
+                        if (settled) { if (stallWatch) { clearInterval(stallWatch); stallWatch = null; } return; }
+                        const now = performance.now();
+                        if (bytes !== lastProgBytes) { lastProgBytes = bytes; lastProgT = now; return; }
+                        if (now - lastProgT >= 10000) escapeToLadder('stallWatch bytes=' + bytes);
+                    }, 2500);
                 }).catch(() => fallback());
             }
 
             if (preroll) {
-                // The readout owns the TC row's slot until the reel rolls
-                // (they overlap at narrow widths — see .tc-row-dim note).
-                if (heroTcRow) heroTcRow.classList.add('is-hidden');
+                // V-1.3.2-a: the TC row no longer hides behind the loading
+                // readout — it stays visible from page paint (at 00) and the
+                // loading readout renders above it instead of replacing it.
                 const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
                 const forceHls = /[?&]stream=hls\b/.test(location.search); // debug/testing override
                 if (conn.saveData || (conn.effectiveType || '').includes('2g')) {
@@ -2776,7 +2858,6 @@
             heroVideo.addEventListener('waiting', () => {
                 if (heroVideo.ended || !gateOpen || !preroll) return;
                 if (prerollLabel) prerollLabel.textContent = 'LOADING HERO_REEL.MOV';
-                if (heroTcRow) heroTcRow.classList.add('is-hidden');
                 preroll.classList.remove('opacity-0', 'pointer-events-none');
                 if (prerollReadout) prerollReadout.classList.remove('opacity-0');
                 startStallBar();
@@ -2998,7 +3079,10 @@
             });
         });
 
-        // Live 60fps timecode counter
+        // Live 60fps timecode counter — counts from 00:00:00:00 at page
+        // paint, continuously (wall-clock, not reel-driven), and stays
+        // visible for the whole hero lifecycle: while the reel loads and
+        // decrypts it counts up like a running clock from zero.
         (function () {
             const el = document.getElementById('timecode');
             if (!el || reduceMotion) return;
