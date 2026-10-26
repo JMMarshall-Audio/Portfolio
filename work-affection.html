@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<!--
+    JOSEPH MARSHALL — Work Project Page: "Affection" (Music Mix)
+    Companion page to index.html — same design system (stage-black ground,
+    vu-amber accents, Bebas Neue / Inter / IBM Plex Mono, tape/slate theming).
+    Each portfolio project gets its own page like this one.
+
+    Panel checklist coverage (what the panel wants inside a work card — see
+    "Porfolio Files FOR AI/what-the-panel-wants-inside-a-work-card.html"):
+      1. Real project title                  → "Affection — Music Mix"
+      2. Real "what I did"                   → "What I Did" section, written for the portfolio
+      3. Real media or a real link           → mix player (see NOTE below) + link row
+      4. Named role / knowable contribution  → "Mix Engineer" role block
+      5. Credits / who it was for / with     → Credits line
+
+    NOTE — MIX PLAYER: drop the mix bounce beside this file
+    (affection-mix.wav — keep the filename, or update BOTH the <audio> src
+    and the tape row's format badge) and the player goes live with no other
+    changes. This is the UNMASTERED mix bounce — the exhibited version, shown
+    as mixed. If you move the mix to SoundCloud/Vimeo instead, delete the
+    <audio> block and put the embed in the same slot (see the commented
+    example in the main site's WORK cards).
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="color-scheme" content="dark">
+    <title>Affection (Mix) — Mix Engineer · Joseph Marshall</title>
+    <meta name="description" content="Affection — music mix by Joseph Marshall. Unmastered stereo mix: re-amped bass, sidechained guitar solo and bespoke plate reverbs, presented as mixed for mastering.">
+    <meta property="og:title" content="Affection (Mix) — Mix Engineer · Joseph Marshall">
+    <meta property="og:description" content="Unmastered stereo mix, shown as mixed: re-amped bass, sidechained guitar solo, bespoke plate reverbs and a crystal synth outro.">
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230c0c0b'/%3E%3Cpath d='M8 34h7l5-14 7 26 6-20 4 8h19' stroke='%23e8a33d' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+    <link rel="stylesheet" href="../assets/css/tailwind.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ---------- Base (matches main site) ---------- */
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c0c0b;
+        }
+
+        /* ---------- Page hero ---------- */
+        .project-hero {
+            min-height: 60vh;
+            min-height: 60svh;
+            padding-top: 16rem;
+        }
+
+        /* ---------- Slate / clapperboard section header (main site) ---------- */
+        .slate-stripe {
+            background: repeating-linear-gradient(
+                -35deg,
+                #ede6d6 0px, #ede6d6 22px,
+                #17160f 22px, #17160f 44px
+            );
+            height: 10px;
+        }
+        .slate-header {
+            border: 1px solid #2b2925;
+            background: #141310;
+        }
+        .hairline { height: 1px; background: #2b2925; }
+
+        /* ---------- Film grain overlay (main site) ---------- */
+        .grain-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0.05;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ---------- Sprocket cards (main site) ---------- */
+        .sprocket-card {
+            position: relative;
+            background: #161513;
+            border: 1px solid #2b2925;
+            /* V-1.3.3-a: was `anywhere`, which let flex-squeezed label words like
+               Mastering / Performers split mid-word. `break-word` only splits a
+               word when nothing else fits, and the credit rows below now stack
+               above sm so labels get full width on phones anyway. */
+            overflow-wrap: break-word;
+        }
+        .sprocket-strip {
+            width: 100%;
+            height: 14px;
+            background-image: radial-gradient(circle, #0c0c0b 3.5px, transparent 3.6px);
+            background-size: 22px 14px;
+            background-position: 11px center;
+            background-color: #201e1a;
+            background-repeat: repeat-x;
+        }
+
+        /* ---------- Fader strip (console-channel divider, from main site) ---------- */
+        /* ---------- Spectrum analyser (player) + EQ curve (section header) ----------
+           Self-contained CSS: the compiled tailwind.css doesn't carry every
+           utility, so these graphics own their sizing outright. */
+        #playerMeter { width: 420px; margin-left: auto; }
+        @media (max-width: 639px) { #playerMeter { width: 100%; } }
+        .meter-scale {
+            position: relative;
+            height: 9px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            line-height: 1;
+            color: #8a6a34;
+            margin-bottom: 3px;
+        }
+        .meter-scale span {
+            position: absolute;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .meter-scale span:first-child { transform: none; }
+        .meter-scale span:last-child { transform: translateX(-100%); }
+        #mixAnalyser {
+            display: block;
+            width: 100%;
+            height: 56px;
+            background: #1a1916;
+            border: 1px solid #4a463d;
+        }
+
+        .eq-curve-strip { opacity: .9; }
+
+        /* ---------- Journal entry cards ----------
+           Left rails use only the established site palette:
+           pale gold #f5c87a (EQ-node gold), primary amber #e8a33d,
+           tape cream #ede6d6, and the cool teal #5fae9e from the
+           fader/analyser gradient — no foreign accents. */
+        .journal-card { border-left: 3px solid #e8a33d; }
+        .journal-card.tag-bass { border-left-color: #f5c87a; }
+        .journal-card.tag-solo { border-left-color: #e8a33d; }
+        .journal-card.tag-tape { border-left-color: #ede6d6; }
+        .journal-card.tag-bus  { border-left-color: #5fae9e; }
+
+        /* ---------- Proof screenshots: indent like console readouts,
+             rounded like the cards themselves ---------- */
+        .proof-shot {
+            display: block;
+            width: 100%;
+            height: auto;
+            border: 1px solid #2b2925;
+            background: #0c0c0b;
+            margin: 1rem 0 0.5rem;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .proof-shot figcaption {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #8a6a34;
+            margin-top: 0.4rem;
+            text-align: right;
+        }
+        .proof-shot img { display: block; width: 100%; height: auto; }
+
+        /* ---------- Buttons ---------- */
+        .btn-amber { background: #e8a33d; color: #0c0c0b; font-weight: 600; transition: all 0.2s ease; }
+        .btn-amber:hover { box-shadow: 0 0 0 2px #e8a33d, 0 0 22px rgba(232,163,61,0.4); transform: translateY(-1px); }
+        .btn-outline { border: 2px solid #e8a33d; color: #e8a33d; transition: all 0.2s ease; }
+        .btn-outline:hover { background: #e8a33d; color: #0c0c0b; transform: translateY(-1px); }
+
+        .card-hover { transition: all 0.25s ease; border-color: #2b2925; }
+        .card-hover:hover { border-color: #e8a33d; transform: translateY(-4px); }
+
+        /* ---------- Timecode ---------- */
+        .timecode-display { font-variant-numeric: tabular-nums; letter-spacing: 0.08em; }
+        .rec-dot { width: 9px; height: 9px; border-radius: 9999px; background: #5fae9e; box-shadow: 0 0 8px 1px rgba(95,174,158,0.6); }
+
+        .tap-expand { position: relative; }
+        .tap-expand::after { content: ""; position: absolute; inset: -8px; }
+
+        /* ---------- Colour fallbacks ---------- */
+        .text-tape-cream { color: #ede6d6 !important; }
+        .text-tape-cream-dim { color: #a8a294 !important; }
+        .text-vu-amber { color: #e8a33d !important; }
+        .text-rec-red { color: #c1272d !important; }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            .rec-dot { animation: none !important; }
+            * { transition: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-stage-black text-tape-cream font-body">
+
+    <noscript>
+        <div style="max-width:720px;margin:48px auto;padding:24px;border:1px solid #2b2925;background:#161513;color:#ede6d6;font-family:Georgia,serif;line-height:1.6">
+            <p style="font-family:monospace;letter-spacing:.12em;color:#e8a33d;text-transform:uppercase;margin:0 0 10px">JAVASCRIPT IS OFF</p>
+            <p style="margin:0 0 10px">The mix on this page is served encrypted and needs JavaScript to decrypt and play in the browser — without it the player can't run. Everything else on the page (the writing, the screenshots, the references) still reads fine.</p>
+            <p style="margin:0">Turn JavaScript on to listen, or email:
+                <a style="color:#e8a33d" href="mailto:JMMarshall.Audio@proton.me">JMMarshall.Audio@proton.me</a></p>
+        </div>
+    </noscript>
+    <a href="#top" class="skip-link" style="position:fixed;top:-60px;left:12px;z-index:2000;padding:10px 16px;background:#e8a33d;color:#0c0c0b;font-family:'IBM Plex Mono',monospace;font-size:13px;border-radius:4px;transition:top .2s ease"
+       onfocus="this.style.top='12px'" onblur="this.style.top='-60px'">Skip to content</a>
+    <div class="grain-overlay"></div>
+
+    <!-- ============ NAV (matches main site) ============ -->
+    <nav class="fixed top-0 w-full bg-stage-black/95 backdrop-blur-md border-b border-reel-border z-50">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <a href="../index.html" class="font-display text-2xl tracking-wide text-tape-cream">JOSEPH <span class="text-vu-amber">MARSHALL</span></a>
+                <ul class="hidden md:flex space-x-8 font-mono text-xs uppercase tracking-widest">
+                    <li><a href="../index.html" class="hover:text-vu-amber transition">Home</a></li>
+                    <li><a href="../index.html#work" class="text-vu-amber">Work</a></li>
+                    <li><a href="../index.html#skills" class="hover:text-vu-amber transition">Skills</a></li>
+                    <li><a href="../index.html#education" class="hover:text-vu-amber transition">Education</a></li>
+                    <li><a href="../index.html#contact" class="hover:text-vu-amber transition">Contact</a></li>
+                </ul>
+                <span class="md:hidden font-mono text-xs uppercase tracking-widest text-vu-amber">SC. 02 · WORK</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============ PAGE HERO ============ -->
+    <header id="top" class="project-hero flex items-end pt-64 pb-10 relative overflow-hidden">
+        <!-- Ambient glow, echoing the main hero's ended state -->
+        <div class="absolute inset-0 pointer-events-none" aria-hidden="true"
+             style="background:
+                 radial-gradient(ellipse at top left, rgba(232,163,61,0.10) 0%, transparent 50%),
+                 radial-gradient(ellipse at bottom right, rgba(232,163,61,0.08) 0%, transparent 50%);"></div>
+
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="max-w-5xl mx-auto">
+                <!-- Breadcrumb -->
+                <nav class="flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-6" aria-label="Breadcrumb">
+                    <a href="../index.html#work" class="hover:text-vu-amber transition"><i class="fas fa-arrow-left mr-2"></i>Back to Work</a>
+                </nav>
+
+                <!-- Tape row: tape number + category + timecode -->
+                <div class="flex flex-wrap items-center gap-3 mb-4 font-mono text-xs uppercase tracking-widest">
+                    <span class="text-vu-amber">TAPE №008</span>
+                    <span class="px-2 py-0.5 bg-vu-amber/10 text-vu-amber">Music Mix</span>
+                    <span class="text-tape-cream-dim hidden sm:inline">STEREO · UNMASTERED · LOGIC PRO</span>
+                    <span class="ml-auto hidden sm:flex items-center gap-2 text-tape-cream-dim">
+                        <span class="rec-dot animate-blink"></span>
+                        <span class="timecode-display text-vu-amber" id="timecode">00:00:00:00</span>
+                    </span>
+                </div>
+
+                <h1 class="font-display text-5xl sm:text-6xl md:text-8xl tracking-wide mb-4">AFFECTION</h1>
+                <p class="text-lg md:text-xl text-vu-amber font-mono mb-4">Mix Engineer · Music Mix</p>
+                <p class="text-base md:text-lg text-tape-cream-dim max-w-3xl leading-relaxed mb-8">
+                    Acoustic-style song with a vocal-forward mix built around four reference tracks.
+                    Aimed to create a natural and "easy-listen" atmosphere with a transparent mix and
+                    a present but not overpowering low end.
+                </p>
+
+                <!-- Quick facts (panel item 5: credits/dates/with) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl">
+                    <div class="sprocket-card p-4 journal-card">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-1">Role</p>
+                        <p class="font-mono text-sm text-vu-amber">Mix Engineer</p>
+                    </div>
+                    <div class="sprocket-card p-4 journal-card">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-1">For</p>
+                        <p class="font-mono text-sm text-vu-amber">University Assignment</p>
+                    </div>
+                    <div class="sprocket-card p-4 journal-card">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-1">Format</p>
+                        <p class="font-mono text-sm text-vu-amber">Stereo · WAV</p>
+                    </div>
+                    <div class="sprocket-card p-4 journal-card">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-1">Monitor Chain</p>
+                        <p class="font-mono text-sm text-vu-amber leading-tight">KRK Classic 5 + HD 206</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom melt like the main hero -->
+        <div class="absolute left-0 right-0 bottom-0 h-32 pointer-events-none z-[2]"
+             style="background: linear-gradient(to bottom, rgba(12,12,11,0) 0%, rgba(12,12,11,0.5) 55%, #0c0c0b 85%);" aria-hidden="true"></div>
+    </header>
+
+    <!-- ============ MIX PLAYER (panel item 3: real media) ============ -->
+    <section class="pb-20 relative">
+        <div class="container mx-auto px-6">
+            <div class="max-w-5xl mx-auto">
+                <div class="sprocket-card overflow-hidden journal-card">
+                    <div class="sprocket-strip"></div>
+                    <div class="p-6 md:p-8">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                            <h2 class="font-display text-2xl sm:text-3xl tracking-wide">THE MIX</h2>
+                            <div id="playerMeter" aria-hidden="true">
+                        <!-- mix meter: live VU blocks driven by the mix playback -->
+                        <div class="meter-scale" aria-hidden="true">
+                            <span style="left:0%">20Hz</span><span style="left:30.1%">160</span><span style="left:56.6%">1k</span><span style="left:86.7%">8k</span><span style="left:100%">20kHz</span>
+                        </div>
+                        <canvas id="mixAnalyser" width="840" height="112"></canvas>
+                    </div>
+                        </div>
+
+                        <!-- Real embed goes here.
+                             Local file today: affection-mix.wav in the site root
+                             (unmastered mix bounce). SoundCloud/Vimeo swap-in
+                             example:
+                               <iframe class="w-full" height="166" scrolling="no" frameborder="no" allow="autoplay"
+                                   src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/TRACK_ID&color=%23e8a33d"></iframe>
+                        -->
+                        <div class="bg-stage-black border border-reel-border p-5 md:p-6">
+                            <div id="nowPlaying" class="flex items-center gap-3 mb-4 opacity-0 transition-opacity duration-300" aria-hidden="true">
+                                <span class="rec-dot animate-blink"></span>
+                                <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim" id="nowPlayingLabel">Now playing · Affection (mix)</span>
+                            </div>
+                            <!-- Encrypted playback: fetches Affection Mix.wav.enc (JMPROT01
+                                 bundle, same format as the reel) from the R2 bucket,
+                                 decrypts in memory with the key served by the Worker for
+                                 this site's origins, then plays via a RAM-only blob URL.
+                                 Same "deterrent-grade" honest limits as the reel: the browser
+                                 must hold the key to play, so no scheme here is true DRM. -->
+                            <audio controls preload="metadata" class="w-full"
+                                   aria-label="Affection — mix, unmastered">
+                                Your browser can't play the mix inline.
+                            </audio>
+                            <!-- A/B: the static mix (pre-fader balance) kept alongside
+                                 the main mix. Same JMPROT01 encryption, same Worker key,
+                                 decrypted alongside the main mix at load. The two bounces
+                                 sit on one shared timeline (FFT cross-correlation) with the
+                                 static mix 1.7528 s ahead of the full mix, so a swap maps
+                                 static = full − 1.7528 s and lands on the same musical
+                                 point. Both elements feed the analyser through their own
+                                 gain, so toggling is a crossfade — no stop, no stutter. -->
+                            <div class="flex flex-wrap items-center gap-3 mt-3">
+                                <button id="abToggle" type="button" disabled
+                                        class="font-mono text-xs uppercase tracking-widest px-4 py-2 border border-vu-amber/60 text-vu-amber hover:bg-vu-amber/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        title="Switch to the static (pre-fader) mix, landed at the same point in the song and level-matched">
+                                    Swap to static mix
+                                </button>
+                                <span id="abHint" class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim opacity-0 transition-opacity duration-300" aria-hidden="true"></span>
+                            </div>
+                            <audio id="staticAudio" controls preload="metadata" class="w-full mt-3" style="display:none"
+                                   aria-label="Affection — static mix, pre-fader balance">
+                                Your browser can't play the static mix inline.
+                            </audio>
+                            <p id="mixStatus" class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim" style="margin-top:22px; margin-bottom:10px">
+                                Stereo WAV · unmastered mix — shown exactly as mixed, ahead of mastering
+                            </p>
+                            <noscript>
+                                <p class="font-mono text-xs text-tape-cream-dim mt-2">Audio playback needs JavaScript — the mix is served encrypted.</p>
+                            </noscript>
+                        </div>
+                        <div class="sprocket-strip mt-6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ WHAT I DID (panel item 2: real "what I did") ============ -->
+    <section class="py-24 bg-reel-card/30">
+        <div class="container mx-auto px-6">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex flex-wrap items-center gap-4 mb-10">
+                    <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 02</div>
+                    <div class="eq-curve-strip flex-1" aria-hidden="true">
+                        <!-- section header: a FabFilter-style EQ graph, redrawn from
+                             scratch: smooth band curves, filled response area and
+                             coloured node points so it reads as an EQ at a glance.
+                             Left to right: low cut shelf, wide bell boost,
+                             sharp notch, high shelf lift (20 kHz edge) -->
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" style="width:100%; height:64px">
+                            <!-- 0 dB reference line -->
+                            <line x1="0" y1="42" x2="400" y2="42" stroke="#4a463d" stroke-width="1" stroke-dasharray="5 5" opacity="0.7"/>
+                            <!-- filled response area (curve-to-baseline energy) -->
+                            <path d="M0 34 C 25 36, 45 40, 58 46 C 60 55, 68 63, 80 64 C 95 65, 110 60, 122 46 C 132 40, 145 26, 165 18 C 185 12, 215 10, 235 16 C 255 22, 270 34, 282 40 L 288 41 C 291 52, 296 66, 302 68 C 306 69, 310 62, 312 50 C 314 44, 316 42, 318 42 C 330 40, 345 30, 362 24 C 375 20, 385 20, 392 24 L 400 46 L 400 42 L 0 42 Z"
+                                  fill="#e8a33d" opacity="0.10"/>
+                            <!-- response curve (soft halo underneath) -->
+                            <path d="M0 34 C 25 36, 45 40, 58 46 C 60 55, 68 63, 80 64 C 95 65, 110 60, 122 46 C 132 40, 145 26, 165 18 C 185 12, 215 10, 235 16 C 255 22, 270 34, 282 40 L 288 41 C 291 52, 296 66, 302 68 C 306 69, 310 62, 312 50 C 314 44, 316 42, 318 42 C 330 40, 345 30, 362 24 C 375 20, 385 20, 392 24 L 400 46"
+                                  fill="none" stroke="#e8a33d" stroke-width="7" opacity="0.16" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+                            <path d="M0 34 C 25 36, 45 40, 58 46 C 60 55, 68 63, 80 64 C 95 65, 110 60, 122 46 C 132 40, 145 26, 165 18 C 185 12, 215 10, 235 16 C 255 22, 270 34, 282 40 L 288 41 C 291 52, 296 66, 302 68 C 306 69, 310 62, 312 50 C 314 44, 316 42, 318 42 C 330 40, 345 30, 362 24 C 375 20, 385 20, 392 24 L 400 46"
+                                  fill="none" stroke="#e8a33d" stroke-width="2.5" opacity="0.95" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+                            <!-- EQ node points, one per band (plugin-style) -->
+                            <circle cx="25" cy="36" r="3.5" fill="#f5c87a" stroke="#1a1814" stroke-width="1"/>
+                            <circle cx="90" cy="64" r="3.5" fill="#f5c87a" stroke="#1a1814" stroke-width="1"/>
+                            <circle cx="207" cy="11.5" r="4" fill="#f5c87a" stroke="#1a1814" stroke-width="1"/>
+                            <circle cx="302" cy="68" r="3.5" fill="#f5c87a" stroke="#1a1814" stroke-width="1"/>
+                            <circle cx="378" cy="20" r="3.5" fill="#f5c87a" stroke="#1a1814" stroke-width="1"/>
+                        </svg>
+                    </div>
+                    <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">WHAT I DID</h2>
+                </div>
+
+                <p class="text-tape-cream-dim leading-relaxed text-base md:text-lg max-w-4xl mb-12">
+                    I mixed this from the artist's initial multitrack in Logic Pro with three main mix
+                    passes. Initially, a static mix and general cleanup — getting general levels and
+                    checking for any recording issues or performance mistakes so they were fixed. Then
+                    the main creative mix, which included the bulk of the work: everything from general
+                    EQ and compression on single tracks and buses to creative decisions such as the
+                    intro — this was where the majority of the mixing took place. Finally, a last pass
+                    to check nothing was overlooked and the target loudness was reached. The mix aimed
+                    for a relaxed and natural sound: vocals and guitar solo at the front, the guitar
+                    holding the main body, and the drums sitting behind everything as the backbone.
+                    Below: problems I faced and specific creative decisions I made, each with an
+                    explanation and screenshots.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Reference strategy --><article class="sprocket-card card-hover p-4 sm:p-6 journal-card">
+    <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Reference tracks</p>
+                        <h3 class="text-lg font-semibold mb-3">Four references, each picked for a target</h3>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
+                            I selected reference tracks using the same method I would apply for a client —
+                            following Dom Morley's mix-management approach in Sound on Sound: decide the
+                            specific roles or targets each reference should serve, then find tracks to
+                            meet those aims, rather than choosing songs by feel.
+                        </p>
+                        <ul class="space-y-2 text-sm text-tape-cream-dim">
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">Home — Cavetown.</strong> Genre/feel target; vocal doubling, harmony blending, subtle atmospheric reverbs.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">The Wrong Direction — Passenger.</strong> Acoustic-guitar clarity and tone that never overpowers the vocal.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">That Distant Shore — Steven Universe.</strong> Role model for the background crystal synth and the outro.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">Be Easy — Toby Bain.</strong> Artist reference — used to understand the client's preferred sound and mix outcome.</span></li>
+                        </ul>
+                    </article>
+
+                    <!-- Gain staging & hygiene --><article class="sprocket-card card-hover p-4 sm:p-6 journal-card">
+    <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Gain staging</p>
+                        <h3 class="text-lg font-semibold mb-3">Cleaning and levelling the session first</h3>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
+                            First pass cleaned and levelled everything before any creative processing —
+                            because creative plugins only work on a balanced mix.
+                        </p>
+                        <ul class="space-y-2 text-sm text-tape-cream-dim">
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Tracks organised, coloured and parked into folders and auxes; no template, auxes built for this song only.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Resonance hunting and notch-filtering pass across every track in isolation, then instrument groups, then the full mix.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>High-pass on kick at 12&nbsp;kHz, steep low-pass on vocal at 100&nbsp;Hz, 12&nbsp;dB of muddiness removed.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Gain staged to −12 → −9 dB peaks on the first pass (headroom for plugins), then remixed to −6 dB peak for mastering.</span></li>
+                        </ul>
+                    </article>
+
+                    <!-- Bass amp re-amp (tag-bass) -->
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-bass">
+                        <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Bass</p>
+                        <h3 class="text-lg font-semibold mb-3">Re-amping the bass, virtually</h3>
+
+                        <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
+                            Most muddy track in the session. The bass amp was fighting the kick and
+                            sub-kick for 50–200 Hz whilst lacking articulation. Since it was a DI bass
+                            recording I was able to virtually reamp it using Logic's native Bass Amp
+                            Designer, using a Neumann U 87-style microphone emulation alongside the
+                            amp's graphic EQ to reduce the muddiness and improve the clarity. Proper
+                            hardware re-amping wasn't possible within the assignment's time and
+                            resources, so this was done in the box. This was then followed by a mix of
+                            static and dynamic EQ and multiband compression to fine-tune the tone of
+                            the bass.
+                        </p>
+
+                        <figure class="proof-shot">
+                            <img src="../assets/media/bass-subkick-masking.jpg" loading="lazy" alt="Logic Bass Amp Designer on the bass track, showing the graphic EQ, amp EQ and compressor settings used as a first treatment, with the modelled Condenser 87 mic placed between the drivers">
+                            <figcaption>Logic Bass Amp Designer — inserted on the bass guitar to virtually re-amp it: graphic EQ, amp EQ and compressor, with the U 87-style mic between the drivers</figcaption>
+                        </figure>
+                        <figure class="proof-shot">
+                            <img src="../assets/media/bass-proq3.jpg" loading="lazy" alt="FabFilter Pro-Q 3 on the bass, showing the dynamic and static low-end cut carved out of the masked 50–100 Hz region with the sub-kick spectrum overlaid">
+                            <figcaption>FabFilter Pro-Q 3 — inserted on the bass to carve the masked 50–100 Hz region where it fought the sub-kick</figcaption>
+                        </figure>
+                        <figure class="proof-shot">
+                            <img src="../assets/media/bass-tom-mbcomp.jpg" loading="lazy" alt="FabFilter Pro-MB on the bass, showing the low-band multiband compressor keyed by the toms cutting only the fundamental range where they overlap">
+                            <figcaption>FabFilter Pro-MB — inserted on the bass, keyed by the toms, cutting only the fundamental range so both stay present</figcaption>
+                        </figure>
+                        <ul class="space-y-2 text-sm text-tape-cream-dim">
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Amp-EQ + graphic-EQ, driven like a real re-amp (shown above).</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Modelled Neumann U87 placed between the bass and mid drivers — its 9 kHz bump returns the articulation.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Dynamic + static cut of the masked 50–100 Hz region (Pro-Q 3, shown above).</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Multiband compressor keyed off the toms (Pro-MB, shown above) — cutting only the fundamental range so bass stays present between tom hits.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>iZotope Guitar De-noise cleared playing squeaks.</span></li>
+                        </ul>
+                    </article>
+
+                    <!-- Guitar solo (tag-solo) -->
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-solo">
+                        <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Guitar solo</p>
+                        <h3 class="text-lg font-semibold mb-3">Smoothness for the guitar solo</h3>
+
+                        <figure class="proof-shot">
+                            <img src="../assets/media/solo-amp-designer.jpg" loading="lazy" alt="Logic Amp Designer on the guitar solo, showing the Studio Amp, Modern American 4x12 cabinet and Ribbon 121 mic used transparently rather than as a distortion effect">
+                            <figcaption>Logic Amp Designer — inserted on the guitar solo to shape its tone transparently: Studio Amp, Modern American 4x12, Ribbon 121</figcaption>
+                        </figure>
+                        <figure class="proof-shot">
+                            <img src="../assets/media/solo-saturn2.jpg" loading="lazy" alt="FabFilter Saturn 2 on the guitar solo with the Smudge preset, very light tilt-shelf saturation for warmth without harshness">
+                            <figcaption>FabFilter Saturn 2 — very light tilt-shelf saturation on the solo (low cut, high boost) for warmth, never harshness</figcaption>
+                        </figure>
+                        <figure class="proof-shot">
+                            <img src="../assets/media/solo-noisetrack-mbcomp.jpg" loading="lazy" alt="FabFilter Pro-MB on the guitar solo, showing the hi-mid band keyed by the crystal-synth noise track so it only ducks where they genuinely collide">
+                            <figcaption>FabFilter Pro-MB — hi-mid band on the solo, keyed by the crystal-synth noise track so it only ducks where they genuinely collide</figcaption>
+                        </figure>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
+                            The solo replaces the vocal at the centre of the song after chorus one — it has
+                            to be as sonically smooth as the voice it stands in for.
+                        </p>
+                        <ul class="space-y-2 text-sm text-tape-cream-dim">
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Resonance notches, then Logic Amp Designer as a transparent character-pass — studio amp, modern cabinet, small gain boost, slight mid cut for articulation.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Modelled Royer R-121 ribbon, off-axis and pulled back from the cone so the high-end could breathe.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>FabFilter Saturn 2 — very light tilt-EQ saturation (low cut, high boost) for warmth, never harshness.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>Multiband compressor keyed from the crystal-synth "noise" track, active only in the hi-mids where articulation lives — 2&nbsp;dB above playing level, fast attack, medium ratio, letting the crystal synths poke through while the guitar keeps its body.</span></li>
+                        </ul>
+                    </article>
+
+                    <!-- Tape samples (tag-tape) -->
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-tape">
+                        <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Tape samples</p>
+                        <h3 class="text-lg font-semibold mb-3">Bedding in the tape samples</h3>
+
+                        <figure class="proof-shot">
+                            <img src="../assets/media/tape-dustbin-reverb.jpg" loading="lazy" alt="Caelum Audio's Dustbin Electroacoustic Transducer reverb plugin, used at very large room size to push the tape sample's direct signal back and soften its interference/artefacts">
+                            <figcaption>Caelum Audio Dustbin reverb — huge room size on the tape sample, pushing the direct signal back to soften the interference artefacts</figcaption>
+                        </figure>
+                        <figure class="proof-shot">
+                            <img src="../assets/media/tape-dearvr-micro.jpg" loading="lazy" alt="Dear Reality DearVR Micro binaural panner, automated so the tape sample drifts around the stereo field left-to-right front-to-back, adding depth and mobility">
+                            <figcaption>DearVR Micro — automated binaural panning on the tape sample, drifting it front-to-back and left-to-right</figcaption>
+                        </figure>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
+                            Hard-coded tape samples stick out like a sore thumb. Two moves made them feel
+                            in-place instead of pasted-on.
+                        </p>
+                        <ul class="space-y-2 text-sm text-tape-cream-dim">
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>A "dustbin" reverb at huge size — pushing so much of the direct signal back that the sample's interference-like artefacts softened into the background.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span>DearVR Micro binaural panner automated front-to-back and left-to-right — the sample drifts around the stereo field as the track plays, adding both depth and motion.</span></li>
+                        </ul>
+                    </article>
+
+                    <!-- Bus treatments (tag-bus) -->
+                    <article class="sprocket-card card-hover p-4 sm:p-6 journal-card tag-bus">
+                        <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Bus treatment</p>
+                        <h3 class="text-lg font-semibold mb-3">Three aux buses and a mixbus</h3>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed mb-4">
+                            Kept the aux count deliberately small — three buses plus a mixbus — to preserve
+                            the natural feel of the song.
+                        </p>
+                        <ul class="space-y-2 text-sm text-tape-cream-dim">
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">Vocal plate:</strong> separate from the instrument plate; no predelay, shorter tail, 90 Hz low cut — reverb felt rather than heard.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">Instrument plate:</strong> 60 ms predelay so transients and reverb each get their own space; low cut and low shelf removing reverb mud (Abbey-road style).</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">Quantec room bus:</strong> parallel to the mixbus, returning lost room tone to the isolation-recorded tracks.</span></li>
+                            <li class="flex gap-2"><span class="text-vu-amber shrink-0">—</span><span><strong class="text-tape-cream">Mixbus:</strong> light glue compression — −8 dB threshold, 1.9:1 ratio, 3 dB wet boost — and a 1.6 dB air-boost at 11 kHz that only reveals itself on A/B.</span></li>
+                        </ul>
+
+                        <!-- Aux screenshots: three dropdowns (Auxes / Mixbus / Quantec) -->
+                        <div class="mt-5 space-y-2" id="auxDropdowns">
+                            <details class="border border-reel-border bg-stage-black">
+                                <summary class="cursor-pointer select-none px-4 py-3 font-mono text-xs uppercase tracking-widest text-vu-amber">
+                                    &nbsp;Auxes
+                                    <span class="text-tape-cream-dim normal-case tracking-normal">— Pure Plate</span>
+                                </summary>
+                                <div class="px-4 pb-4 space-y-4">
+                                    <figure class="proof-shot">
+                                        <img src="../assets/media/vox-plate.png" loading="lazy" alt="Pure Plate vocal plate reverb aux: low cut 90 Hz, no predelay, shorter reverb time">
+                                        <figcaption>Vox Plate aux (Pure Plate) — separate from the instrument plate: no predelay, shorter tail, 90&nbsp;Hz low cut — reverb felt rather than heard</figcaption>
+                                    </figure>
+                                    <figure class="proof-shot">
+                                        <img src="../assets/media/instrument-plate.png" loading="lazy" alt="Pure Plate instrument plate reverb aux with 60 ms predelay">
+                                        <figcaption>Instrument Plate aux (Pure Plate) — 60&nbsp;ms predelay so transients and reverb each get their own space; low cut and low shelf against reverb mud, Abbey Road style</figcaption>
+                                    </figure>
+                                    <figure class="proof-shot">
+                                        <img src="../assets/media/instrument-plate-eq.png" loading="lazy" alt="Vintage Console EQ post-reverb on the instrument plate return, low-cut at 62 Hz, low and mid gain cuts, slight high gain">
+                                        <figcaption>Instrument Plate EQ (Vintage Console EQ) — corrective curves post-plate: low cut, low/mid trims, slight top</figcaption>
+                                    </figure>
+                                </div>
+                            </details>
+                            <details class="border border-reel-border bg-stage-black">
+                                <summary class="cursor-pointer select-none px-4 py-3 font-mono text-xs uppercase tracking-widest text-vu-amber">
+                                    &nbsp;Mixbus
+                                    <span class="text-tape-cream-dim normal-case tracking-normal">— Pro-C 2 + console-style EQ</span>
+                                </summary>
+                                <div class="px-4 pb-4 space-y-4">
+                                    <figure class="proof-shot">
+                                        <img src="../assets/media/mixbus-comp.png" loading="lazy" alt="FabFilter Pro-C 2 on the mixbus, bus compression mode: −8 dB threshold, 1.9:1 ratio, slow attack and release">
+                                        <figcaption>Mixbus compression (FabFilter Pro-C 2) — light glue: −8&nbsp;dB threshold, 1.9:1 ratio, 3&nbsp;dB wet boost</figcaption>
+                                    </figure>
+                                    <figure class="proof-shot">
+                                        <img src="../assets/media/mixbus-eq.png" loading="lazy" alt="Console-style mixbus EQ with gentle low boost, dips and a small high boost">
+                                        <figcaption>Mixbus EQ (console-style) — the gentle tone shaping, including the 1.6&nbsp;dB air-lift that only reveals itself on A/B</figcaption>
+                                    </figure>
+                                </div>
+                            </details>
+                            <details class="border border-reel-border bg-stage-black">
+                                <summary class="cursor-pointer select-none px-4 py-3 font-mono text-xs uppercase tracking-widest text-vu-amber">
+                                    &nbsp;Quantec
+                                    <span class="text-tape-cream-dim normal-case tracking-normal">— room bus</span>
+                                </summary>
+                                <div class="px-4 pb-4">
+                                    <figure class="proof-shot">
+                                        <img src="../assets/media/quantec.png" loading="lazy" alt="Quantec YardStick room simulator as a parallel room bus, 710 ms reverb time">
+                                        <figcaption>Quantec room bus (YardStick) — parallel to the mixbus, returning room tone to the isolation-recorded tracks</figcaption>
+                                    </figure>
+                                </div>
+                            </details>
+                        </div>
+                    </article>
+
+                    <!-- Production moments --><article class="sprocket-card card-hover p-6 md:col-span-2 journal-card">
+    <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-2">Production moments</p>
+                        <h3 class="text-lg font-semibold mb-3">Three moments, built by editing alone</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                            <div>
+                                <p class="font-mono text-xs text-tape-cream-dim uppercase mb-2">Intro</p>
+                                <p class="text-tape-cream-dim text-sm leading-relaxed">
+                                    I wanted the intro to ease naturally into the song while staying true
+                                    to the direction of the original multitrack. Reversed guitar with
+                                    stereo spread focused on the mids and high-mids leads into the
+                                    original chord through a dense EMT reverb, then a quieter reversed
+                                    clip tapers away — a gradual transition into the track that doesn't
+                                    feel out of place.
+                                </p>
+                            </div>
+                            <div>
+                                <p class="font-mono text-xs text-tape-cream-dim uppercase mb-2">Guitar solo build</p>
+                                <p class="text-tape-cream-dim text-sm leading-relaxed">
+                                    The transition into the solo already worked, but I felt it could hit
+                                    harder with a little editing. Stripped the drums back to kick and
+                                    snare, raising the snare around 8 dB to give the fill more weight and
+                                    nudging its timing, which became noticeable once the other drums were
+                                    gone. Bringing in the crash on the following downbeat completes the
+                                    transition and draws attention to the solo.
+                                </p>
+                            </div>
+                            <div>
+                                <p class="font-mono text-xs text-tape-cream-dim uppercase mb-2">Outro</p>
+                                <p class="text-tape-cream-dim text-sm leading-relaxed">
+                                    Taking the crystal-like plucks in "That Distant Shore" as inspiration,
+                                    the synth ends the song calmly and lingeringly. The mix cross-fades
+                                    into a version of the crystal synth raised by around 6 dB, and the
+                                    final note pans left to right with each delay repeat — the movement
+                                    gives the ending a little more life while the track winds down
+                                    gently.
+                                </p>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ CREDITS & MONITORING (panel item 5) ============ -->
+    <section class="py-24">
+        <div class="container mx-auto px-6">
+            <div class="max-w-5xl mx-auto">
+                <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="sprocket-card p-4 sm:p-6 journal-card">
+                        <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-4">Credits</p>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Context</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">University mix assignment — unmastered</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Artist / Songwriting / Performance</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Toby Bain</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Mix</span>
+                                <span class="text-vu-amber min-w-0 flex-1 text-left sm:text-right">Joseph Marshall</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Mastering</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Not yet mastered — mix exhibited as-delivered</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Original release (April 2026)</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Recorded by Rob Quickenden at Ford Lane Studios · released mix by Max Fletcher</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sprocket-card p-4 sm:p-6 journal-card">
+                        <p class="font-mono text-xs uppercase tracking-widest text-vu-amber mb-4">Monitoring</p>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Speakers</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">KRK Classic 5</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Headphones</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Sennheiser HD 206</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Calibration</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Sonarworks SoundID Reference</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Work commissioned</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">University assignment</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Performers</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Toby Bain — guitar, synth & tape loops · David Kelly — bass · Simon Stewart — drums · Sam Salkeld — guitar solo</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Demo recordings</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Matt Wagstaff (drums), Oliver Clarke-Walker (engineering), Poppy Humphries</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span class="text-tape-cream-dim shrink-0 whitespace-nowrap">Verification</span>
+                                <span class="text-tape-cream min-w-0 flex-1 text-left sm:text-right">Stereo &amp; mono, loud/quiet, in-room</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ PROCESS NOTES ============ -->
+    <section class="py-24 bg-reel-card/30">
+        <div class="container mx-auto px-6">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex flex-wrap items-center gap-4 mb-10">
+                    <div class="slate-header px-4 py-2 font-mono text-xs text-vu-amber whitespace-nowrap">SC. 03</div>                    <div class="flex-1 h-7 flex items-end gap-[3px]">
+                        <span class="w-full bg-vu-amber" style="height:4px"></span>
+                        <span class="w-full bg-vu-amber" style="height:10px"></span>
+                        <span class="w-full bg-vu-amber" style="height:7px"></span>
+                        <span class="w-full bg-vu-amber" style="height:16px"></span>
+                        <span class="w-full bg-vu-amber" style="height:10px"></span>
+                        <span class="w-full bg-vu-amber" style="height:13px"></span>
+                        <span class="w-full bg-vu-amber" style="height:7px"></span>
+                        <span class="w-full bg-vu-amber" style="height:4px"></span>
+                        <span class="w-full bg-vu-amber" style="height:10px"></span>
+                        <span class="w-full bg-vu-amber" style="height:7px"></span>
+                        <span class="w-full bg-vu-amber" style="height:16px"></span>
+                        <span class="w-full bg-vu-amber" style="height:13px"></span>
+                        <span class="w-full bg-vu-amber" style="height:10px"></span>
+                        <span class="w-full bg-vu-amber" style="height:7px"></span>
+                        <span class="w-full bg-vu-amber" style="height:4px"></span>
+                    </div>
+                    <h2 class="font-display text-2xl sm:text-3xl md:text-4xl tracking-wide whitespace-nowrap">PROCESS NOTES</h2>
+                </div>                    <p class="text-tape-cream-dim text-sm mb-8 max-w-4xl">
+                        Notes behind the decisions, written for this portfolio — how the mix was
+                        aimed, checked and put together.
+                    </p>
+
+                <div class="max-w-4xl space-y-6">
+
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Overall aim</p>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed">
+                            The song asked for a relaxed atmosphere — closer in feel to cool jazz / hard bop
+                            with instrument roles shuffled than to a standard band mix. Vocals and guitar
+                            solo lead; the acoustic guitar holds its own space; drums sit back in loudness.
+                            Everything from reference choice to bus design was judged against that one aim.
+                        </p>
+                    </article>
+
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">On working with the artist</p>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed">
+                            Reference choice included a discussion-with-the-client step: a Sound on Sound
+                            article on mix management prompted checking the artist's influences directly,
+                            and also accepting that a previous release "doesn't mean you know what they
+                            are looking for this time. Artists change and evolve." Where a creative
+                            decision rested on taste (a drastic bass treatment, the Quantec room bus) it
+                            is flagged as a point to bring back to the artist — the mix must serve their
+                            vision.
+                        </p>
+                    </article>
+
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Verification</p>
+                        <p class="text-tape-cream-dim text-sm leading-relaxed">
+                            Critical listening in stereo and mono, at normal, louder and quieter levels,
+                            on both calibrated headphones (Sennheiser HD 206 + Sonarworks SoundID
+                            Reference) and KRK Classic 5 monitors — before signing off any pass.
+                        </p>
+                    </article>
+
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Workflow, in three passes</p>
+                        <ol class="text-tape-cream-dim text-sm leading-relaxed space-y-2 list-decimal list-inside">
+                            <li><strong class="text-tape-cream">Cleanup:</strong> listen through, organise folders/auxes, rough mix, then remove resonances and cut unneeded high/low content on every track.</li>
+                            <li><strong class="text-tape-cream">Creative:</strong> compression and reverb sends — staying natural, never more plugin than the song asks for.</li>
+                            <li><strong class="text-tape-cream">Final remix:</strong> gentle re-balance to −6 dB peak, room for mastering, then full critical-listening sign-off.</li>
+                        </ol>
+                    </article>
+
+                    <article class="sprocket-card journal-card p-4 sm:p-6">
+                        <p class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim mb-2">Research Sources</p>
+                        <ul class="text-tape-cream-dim text-sm leading-relaxed space-y-1">
+                            <li>Morley, D. (2021) <em>Mix Management</em>, Sound on Sound.</li>
+                            <li>Owsinski, B. (2022) <em>The Mixing Engineer's Handbook</em>, 5th edn.</li>
+                            <li>Long, G. (2024) <em>Abbey Road Reverb</em>, Mixdown Magazine.</li>
+                            <li>Haas, W. (2008) <em>The SOS Guide To Mix Compression</em>, Sound on Sound.</li>
+                        </ul>
+                    </article>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ NEXT PROJECT + CONTACT STRIP ============ -->
+    <section class="pt-24 pb-6">
+        <div class="container mx-auto px-6">
+            <div class="max-w-5xl mx-auto flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <a href="../index.html#work" class="w-full sm:w-auto px-8 py-3 btn-outline rounded-none text-center">
+                    <i class="fas fa-arrow-left mr-2"></i>All Work
+                </a>
+                <a href="../index.html#contact" class="w-full sm:w-auto px-8 py-3 btn-amber rounded-none text-center">
+                    Get in Touch <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ FOOTER (matches main site) ============ -->
+    <footer class="py-8 border-t border-reel-border">
+        <div class="container mx-auto px-6 text-center">
+            <div class="mb-4 text-lg">
+                <a href="mailto:JMMarshall.Audio@proton.me" class="tap-expand mx-2 hover:text-vu-amber transition"><i class="fas fa-envelope"></i></a>
+                <a href="https://www.linkedin.com/in/joseph-marshall-6873b7342/" target="_blank" rel="noopener" class="tap-expand mx-2 hover:text-vu-amber transition"><i class="fab fa-linkedin"></i></a>
+            </div>
+            <p class="text-tape-cream-dim text-xs font-mono">© 2026 JOSEPH MARSHALL</p>
+        </div>
+    </footer>
+
+    <script>
+        // ---- Encrypted mix player (V1.2.x pattern) ------------------------------
+        // Affection Mix.wav.enc is a JMPROT01 bundle (magic 8 + version 2 +
+        // salt 16 + iv 12 + AES-256-GCM ciphertext). Key arrives from the
+        // same Worker key service as the reel/certificate; origin-gated.
+        (function () {
+            const ENC_URL = 'https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/Affection%20Mix.wav.enc';
+            const KEY_URL = 'https://jm-portfolio-key-service.jmmarshall.workers.dev/key';
+            const audio = document.querySelector('audio[aria-label="Affection \u2014 mix, unmastered"]');
+            const STATIC_ENC_URL = 'https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/affection/v2/Affection%20Static%20Mix.wav.enc';
+            const staticAudio = document.getElementById('staticAudio');
+            const abToggle = document.getElementById('abToggle');
+            const abHint = document.getElementById('abHint');
+            const nowPlayingLabel = document.getElementById('nowPlayingLabel');
+            const baseTextStatic = 'Stereo WAV · static mix — the pre-fader balance pass, before the creative automation';
+            // Timeline alignment of the two bounces (FFT cross-correlation of the
+            // decrypted audio, five windows across the track, spread ±0.5 ms):
+            // static mix position + 1.7528 s = full mix position.
+            const STATIC_OFFSET = 1.7528;
+            // Level match, measured on the same 90 s of music (EBU R128):
+            // static −9.0 LUFS vs main mix −23.1 LUFS → 14.1 LU hotter, with its
+            // true peak already at 0 dBFS. The A/B attenuates the static mix by
+            // that delta so a swap compares mix balance, not bounce level, and
+            // the compressed main mix stays the denser, louder-feeling one.
+            const STATIC_LEVEL_FACTOR = Math.pow(10, -14.1 / 20);   // ≈ 0.196
+            let activeVersion = 'full';                 // 'full' | 'static'
+            const otherEl = (el) => (el === audio ? staticAudio : audio);
+            const activeEl = () => (activeVersion === 'static' ? staticAudio : audio);
+            const status = document.getElementById('mixStatus');
+            const baseText = 'Stereo WAV \u00b7 unmastered mix \u2014 shown exactly as mixed, ahead of mastering';
+            if (!audio || !status) return;
+            const sp = (t) => { status.textContent = t; };
+
+            // "Now playing" row: only visible while the track is actually
+            // sounding. Driven by real playback events, not button clicks.
+            const nowPlaying = document.getElementById('nowPlaying');
+            function setNowPlaying(on) {
+                if (nowPlaying) {
+                    nowPlaying.classList.toggle('opacity-0', !on);
+                    nowPlaying.setAttribute('aria-hidden', on ? 'false' : 'true');
+                }
+            }
+
+            // ---- Real spectrum analyser (Web Audio) --------------------
+            // Decrypted mix → media element → AnalyserNode → speakers. The
+            // bars decay to a true floor (−∞) when signal stops, and the RAF
+            // loop only STOPS once the element is paused (or ended) AND the
+            // display has settled — quiet passages inside the song (the
+            // near-silent intro, soft bridges) must never blank the meter.
+            // While playing, the loop keeps redrawing; wakes also fire on
+            // play/pause/volume changes to re-arm after an idle stop.
+            const analyserCanvas = document.getElementById('mixAnalyser');
+            let analyser = null;
+            let analyserCtx = null;
+            let analyserData = null;
+            let rafId = 0;
+            let idleTimer = null;
+            const IDLE_FRAMES = 45;   // ~0.75s of floor frames after silence starts
+            let floorLeft = 0;
+            let elGains = null;       // Map: audio element -> GainNode (A/B crossfade)
+            function buildGraph() {
+                if (analyser) return;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = ctx.createAnalyser();
+                    analyser.fftSize = 2048;
+                    analyser.smoothingTimeConstant = 0.75;
+                    analyserData = new Uint8Array(analyser.frequencyBinCount);
+                    // Each mix element routes through its own gain into the shared
+                    // analyser, so the A/B toggle can crossfade between them and
+                    // the meter always shows whichever mix is audible.
+                    elGains = new Map();
+                    [audio, staticAudio].forEach(function (el) {
+                        if (!el) return;
+                        try {
+                            const src = ctx.createMediaElementSource(el);
+                            const g = ctx.createGain();
+                            g.gain.value = el === audio ? 1 : 0;
+                            src.connect(g);
+                            g.connect(analyser);
+                            elGains.set(el, g);
+                        } catch (e2) {
+                            console.warn('element route unavailable, playing directly:', e2);
+                        }
+                    });
+                    analyser.connect(ctx.destination);
+                    analyserCtx = ctx;
+                    startAnalyser();
+                } catch (err) {
+                    console.warn('analyser unavailable, player still works:', err);
+                }
+            }
+            function binForFreq(f) {
+                const nyquist = analyserCtx.sampleRate / 2;
+                return Math.min(analyserData.length - 1, Math.round(f / nyquist * analyserData.length));
+            }
+            function drawSpectrum() {
+                rafId = 0;
+                if (!analyserCanvas || !analyser) return;
+                const ctx2d = analyserCanvas.getContext('2d');
+                const W = analyserCanvas.width, H = analyserCanvas.height;
+                const dpr = window.devicePixelRatio || 1;
+                const cssW = parseFloat(getComputedStyle(analyserCanvas).width) || W / dpr;
+                const cssH = parseFloat(getComputedStyle(analyserCanvas).height) || H / dpr;
+                const wantW = Math.round(cssW * dpr), wantH = Math.round(cssH * dpr);
+                if (W !== wantW || H !== wantH) { analyserCanvas.width = wantW; analyserCanvas.height = wantH; }
+                const W2 = analyserCanvas.width, H2 = analyserCanvas.height;
+                analyser.getByteFrequencyData(analyserData);
+                ctx2d.clearRect(0, 0, W2, H2);
+
+                // 48 bars over the log axis 20 Hz → 20 kHz (true positions
+                // under the 20Hz/160/1k/8k/20kHz labels, Pro-Q style).
+                const BARS = 48;
+                const bw = W2 / BARS;
+                const fMin = 20, fMax = 20000;
+                let anyAboveFloor = false;
+                let sum = 0;
+                for (let i = 0; i < BARS; i++) {
+                    const f0 = fMin * Math.pow(fMax / fMin, i / BARS);
+                    const f1 = fMin * Math.pow(fMax / fMin, (i + 1) / BARS);
+                    const lo = binForFreq(f0);
+                    const hi = Math.max(lo + 1, binForFreq(f1));
+                    let peak = 0;
+                    for (let b = lo; b < Math.min(hi + 1, analyserData.length); b++) {
+                        if (analyserData[b] > peak) peak = analyserData[b];
+                    }
+                    // Dynamic range: byteData compresses everything into 8 bits
+                    // (its minVal/maxVal default to −100/−30 dB); remap with a
+                    // −96 dB floor so the display shows quiet detail instead of
+                    // snapping the low end to one width bucket.
+                    const v = Math.max(0, (peak - 48) / (255 - 48));       // −96 dB → 0
+                    const h = v * (H2 - 2);                                // true 0 when silent
+                    if (h > 0.5) anyAboveFloor = true;
+                    sum += h;
+                    if (h > 0.5) {
+                        const x = i * bw;
+                        const g = ctx2d.createLinearGradient(0, H2, 0, 0);
+                        g.addColorStop(0, '#5fae9e');
+                        g.addColorStop(0.72, '#e8a33d');
+                        g.addColorStop(0.97, '#c1272d');
+                        ctx2d.fillStyle = g;
+                        ctx2d.fillRect(x + 1, H2 - 1 - h, Math.max(1, bw - 2), h);
+                    }
+                }
+                // Idle handling: decay through the grace window only while
+                // the element is paused/ended; during PLAYBACK keep looping
+                // so the quiet intro and other soft passages can light the
+                // meter up the moment signal returns.
+                if (!anyAboveFloor && activeEl().paused) {
+                    if (floorLeft === 0) floorLeft = IDLE_FRAMES;
+                    floorLeft--;
+                    if (floorLeft <= 0) { rafId = 0; return; }  // stop; wake on play/volume
+                } else if (anyAboveFloor) {
+                    floorLeft = 0;
+                }
+                rafId = requestAnimationFrame(drawSpectrum);
+            }
+            // Diagnostic counter — counts loop STARTS (pause→play wakes); a
+            // frozen counter while paused proves the loop is truly stopped.
+            window.__analyserFrames = 0;
+            function startAnalyser() {
+                if (!analyser || rafId) return;
+                floorLeft = 0;
+                window.__analyserFrames++;
+                rafId = requestAnimationFrame(drawSpectrum);
+            }
+            function wakeAnalyser() {
+                if (!analyser) return;
+                if (!rafId) startAnalyser();
+                else floorLeft = 0;   // mid-decay: keep looping through the settle
+            }
+            // Wake triggers: play, pause, volume/mute, and low-battery tab
+            // suspension returning. Any audio change is a reason to re-check.
+            audio.addEventListener('pause', wakeAnalyser);
+            audio.addEventListener('volumechange', wakeAnalyser);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) wakeAnalyser(); });
+
+            async function decryptBundle(buffer, passphrase) {
+                const bytes = new Uint8Array(buffer);
+                if (bytes.length < 38 || new TextDecoder().decode(bytes.slice(0, 8)) !== 'JMPROT01') {
+                    throw new Error('not a JMPROT01 bundle');
+                }
+                const salt = bytes.slice(10, 26);
+                const iv = bytes.slice(26, 38);
+                const data = bytes.slice(38);
+                const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+                const key = await crypto.subtle.deriveKey(
+                    { name: 'PBKDF2', salt: salt, iterations: 250000, hash: 'SHA-256' },
+                    base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+                return crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
+            }
+
+            // Auto-decrypt on page load: fetch the bundle, pull the key,
+            // decrypt in memory, and attach the blob URL — so the mix is
+            // simply ready in the native player. Playback still starts only
+            // when the visitor presses play.
+            async function loadMix() {
+                if (audio.src) return;
+                let passphrase = null;
+                try {
+                    sp('Preparing secure playback — fetching & decrypting…');
+                    const res = await fetch(ENC_URL);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    sp('Fetching encryption key…');
+                    const kres = await fetch(KEY_URL, { credentials: 'omit' });
+                    if (!kres.ok) throw new Error('Key service HTTP ' + kres.status);
+                    passphrase = (await kres.text()).trim();
+                    sp('Decrypting…');
+                    const plain = await decryptBundle(await res.arrayBuffer(), passphrase);
+                    audio.src = URL.createObjectURL(new Blob([plain], { type: 'audio/wav' }));
+                    sp(baseText);
+                    audio.load();
+                    buildGraph();   // analyser wakes with the graph and stays on
+                } catch (err) {
+                    console.error(err);
+                    // The mix lives on the host + key service; if either is
+                    // unreachable the honest fallback is the direct route.
+                    status.textContent = 'Playback error — could not load the mix. ';
+                    const a = document.createElement('a');
+                    a.href = 'mailto:JMMarshall.Audio@proton.me';
+                    a.className = 'text-vu-amber ';
+                    a.style.textDecoration = 'underline';
+                    a.style.textUnderlineOffset = '3px';
+                    a.textContent = "Email me and I'll send it over.";
+                    a.rel = 'noopener';
+                    status.appendChild(a);
+                    return;
+                }
+                // Static mix: second bundle, same key. Optional — if this fails
+                // the main mix still plays and the A/B button simply stays off.
+                try {
+                    sp('Preparing the static mix for A/B…');
+                    const sres = await fetch(STATIC_ENC_URL);
+                    if (!sres.ok) throw new Error('HTTP ' + sres.status);
+                    const plain = await decryptBundle(await sres.arrayBuffer(), passphrase);
+                    staticAudio.src = URL.createObjectURL(new Blob([plain], { type: 'audio/wav' }));
+                    staticAudio.volume = audio.volume;
+                    staticAudio.muted = audio.muted;
+                    staticAudio.load();
+                    abToggle.disabled = false;
+                    sp(baseText);
+                } catch (err) {
+                    console.warn('static mix unavailable — A/B toggle disabled:', err);
+                    abToggle.title = 'Static mix could not be loaded — the main mix still plays';
+                }
+            }
+            loadMix();
+            // Browsers create the AudioContext suspended when no user gesture
+            // is pending — resume it the first time real playback starts, or
+            // the analyser sees only silence 0s.
+            // Any user interaction counts as a gesture: keep the analyser
+            // context resumable from the very first click anywhere.
+            document.addEventListener('pointerdown', () => { if (analyserCtx) analyserCtx.resume(); });
+
+            // Both mixes share one wiring: only the ACTIVE element drives the
+            // "now playing" row and the analyser wake; the hidden twin mirrors
+            // volume/mute so the next A/B swap sounds identical.
+            function wirePlayerEvents(el) {
+                el.addEventListener('playing', () => {
+                    if (el !== activeEl()) return;
+                    if (analyserCtx) analyserCtx.resume();
+                    setNowPlaying(true);
+                    wakeAnalyser();
+                });
+                el.addEventListener('pause', () => { if (el !== activeEl()) return; setNowPlaying(false); });
+                el.addEventListener('ended', () => { if (el !== activeEl()) return; setNowPlaying(false); });
+                // Muting drops the analyser to silence too: bars fall to 0 while
+                // the "Now playing" row stays honest to actual sound.
+                el.addEventListener('volumechange', () => {
+                    if (el !== activeEl()) return;
+                    setNowPlaying(el.muted || el.volume === 0 ? false : !el.paused);
+                    const other = otherEl(el);
+                    if (other && (other.volume !== el.volume || other.muted !== el.muted)) {
+                        other.volume = el.volume;
+                        other.muted = el.muted;
+                    }
+                });
+            }
+            wirePlayerEvents(audio);
+            if (staticAudio) wirePlayerEvents(staticAudio);
+
+            // ---- A/B swap (main mix <-> static mix) ----------------------------
+            // Works while playing: the other element is seeked to the same
+            // musical point (static + 1.7528 s = full), started, then the two
+            // element gains crossfade over ~80 ms — the sound never stops.
+            // While paused, the visible controls switch over already seated at
+            // the aligned point, ready to continue from.
+            let swapping = false;
+            function abSwitch() {
+                if (!audio.src || !staticAudio || !staticAudio.src || swapping) return;
+                const from = activeEl();
+                const to = otherEl(from);
+                if (!to || !to.src) return;
+                swapping = true;
+                try {
+                    // same musical moment, clamped inside the other file
+                    let t = from === audio ? from.currentTime - STATIC_OFFSET
+                                           : from.currentTime + STATIC_OFFSET;
+                    t = Math.max(0, Math.min(t, (to.duration || 1) - 0.05));
+                    const canCrossfade = !!(analyserCtx && elGains && elGains.has(from) && elGains.has(to));
+                    const wasPlaying = !from.paused;
+                    if (wasPlaying && canCrossfade) {
+                        to.currentTime = t;
+                        to.play();
+                        const now = analyserCtx.currentTime, fade = 0.08;
+                        const gFrom = elGains.get(from).gain, gTo = elGains.get(to).gain;
+                        gFrom.cancelScheduledValues(now); gTo.cancelScheduledValues(now);
+                        gFrom.setValueAtTime(gFrom.value, now);
+                        gTo.setValueAtTime(gTo.value, now);
+                        gFrom.linearRampToValueAtTime(0, now + fade);
+                        const lvlTo = to === staticAudio ? STATIC_LEVEL_FACTOR : 1;
+                        gTo.linearRampToValueAtTime(lvlTo, now + fade);
+                        // only silence the old element once the fade is done —
+                        // but only if the user has not toggled straight back
+                        setTimeout(() => { if (activeEl() !== from) from.pause(); }, fade * 1000 + 40);
+                    } else {
+                        // paused, or WebAudio absent: silent seat-and-switch
+                        from.pause();
+                        to.currentTime = t;
+                        if (canCrossfade) {
+                            // level comes from the gain node — seat it straight to
+                            // the target version's match factor (covers a mid-fade
+                            // re-toggle) and leave element volume untouched
+                            const g = elGains.get(to).gain;
+                            g.cancelScheduledValues(analyserCtx.currentTime);
+                            g.setValueAtTime(to === staticAudio ? STATIC_LEVEL_FACTOR : 1, analyserCtx.currentTime);
+                        } else {
+                            // no-gain fallback: match levels with element volume
+                            to.volume = from.volume * (to === staticAudio ? STATIC_LEVEL_FACTOR : 1);
+                        }
+                        to.muted = from.muted;
+                        if (wasPlaying && !canCrossfade) to.play();   // fallback: brief gap, still aligned
+                    }
+                    // the other element now owns the visible native controls
+                    from.controls = false; from.style.display = 'none';
+                    to.controls = true; to.style.display = '';
+                    activeVersion = to === staticAudio ? 'static' : 'full';
+                    status.textContent = activeVersion === 'full' ? baseText : baseTextStatic;
+                    abToggle.textContent = activeVersion === 'full' ? 'Swap to static mix' : 'Swap to full mix';
+                    if (nowPlayingLabel) {
+                        nowPlayingLabel.textContent = 'Now playing · Affection (' +
+                            (activeVersion === 'full' ? 'mix' : 'static mix') + ')';
+                    }
+                    if (abHint) {
+                        abHint.textContent = activeVersion === 'full'
+                            ? 'main mix — as mixed'
+                            : 'static mix — pre-fader · level-matched';
+                    }
+                    wakeAnalyser();
+                } catch (err) {
+                    console.error('A/B swap failed:', err);
+                } finally {
+                    swapping = false;
+                }
+            }
+            if (abToggle) abToggle.addEventListener('click', abSwitch);
+        })();
+    </script>
+
+    <script>
+        // Live 60fps timecode counter (matches the main site's hero)
+        (function () {
+            const el = document.getElementById('timecode');
+            if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const fps = 60;
+            const start = Date.now();
+            function pad(n, len) { return String(n).padStart(len, '0'); }
+            function tick() {
+                const elapsedFrames = Math.floor((Date.now() - start) / (1000 / fps));
+                const totalSeconds = Math.floor(elapsedFrames / fps);
+                const text = pad(Math.floor(totalSeconds / 3600), 2) + ':' +
+                             pad(Math.floor((totalSeconds % 3600) / 60), 2) + ':' +
+                             pad(totalSeconds % 60, 2) + ':' +
+                             pad(elapsedFrames % fps, 2);
+                if (el.textContent !== text) el.textContent = text;
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        })();
+    </script>
+</body>
+</html>
