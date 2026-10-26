@@ -638,9 +638,9 @@
             border: 1px solid #2b2925;
             /* Long unbreakable strings (e.g. the contact card's email) must
                wrap — otherwise a forced card width exceeds the viewport on
-               320px devices. 'anywhere' allows breaks inside the word but
-               only when needed. */
-            overflow-wrap: anywhere;        }
+               320px devices. break-word only splits a word when nothing
+               else can fit — normal words never break mid-word. */
+            overflow-wrap: break-word;        }
         .sprocket-strip {
             width: 100%;
             height: 14px;
@@ -1296,23 +1296,23 @@
                 <!-- Quick facts strip, replacing Aurora's inflated stat counters -->
                 <div class="md:col-span-2 space-y-3">
                     <div class="sprocket-card p-4 flex justify-between items-center">
-                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Location</span>
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim shrink-0 whitespace-nowrap">Location</span>
                         <span class="font-mono text-sm text-vu-amber">Buckinghamshire, UK</span>
                     </div>
                     <div class="sprocket-card p-4 flex justify-between items-center">
-                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Primary DAW</span>
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim shrink-0 whitespace-nowrap">Primary DAW</span>
                         <span class="font-mono text-sm text-vu-amber">Avid Pro Tools</span>
                     </div>
                     <div class="sprocket-card p-4 flex justify-between items-center">
-                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Primary Focus</span>
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim shrink-0 whitespace-nowrap">Primary Focus</span>
                         <span class="font-mono text-sm text-vu-amber text-right">Post-Production, Game Audio &amp; Composition</span>
                     </div>
                     <div class="sprocket-card p-4 flex justify-between items-center">
-                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Availability</span>
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim shrink-0 whitespace-nowrap">Availability</span>
                         <span class="font-mono text-sm text-vu-amber text-right">Open to Graduate &amp; Freelance Work</span>
                     </div>
                     <div class="sprocket-card p-4 flex justify-between items-center">
-                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Status</span>
+                        <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim shrink-0 whitespace-nowrap">Status</span>
                         <span class="font-mono text-sm text-vu-amber">Audio Production Graduate</span>
                     </div>
                 </div>
