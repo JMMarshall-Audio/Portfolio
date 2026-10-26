@@ -313,7 +313,7 @@
                         <div class="bg-stage-black border border-reel-border p-5 md:p-6">
                             <div id="nowPlaying" class="flex items-center gap-3 mb-4 opacity-0 transition-opacity duration-300" aria-hidden="true">
                                 <span class="rec-dot animate-blink"></span>
-                                <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim">Now playing · Affection (mix)</span>
+                                <span class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim" id="nowPlayingLabel">Now playing · Affection (mix)</span>
                             </div>
                             <!-- Encrypted playback: fetches Affection Mix.wav.enc (JMPROT01
                                  bundle, same format as the reel) from the R2 bucket,
@@ -324,6 +324,26 @@
                             <audio controls preload="metadata" class="w-full"
                                    aria-label="Affection — mix, unmastered">
                                 Your browser can't play the mix inline.
+                            </audio>
+                            <!-- A/B: the static mix (pre-fader balance) kept alongside
+                                 the main mix. Same JMPROT01 encryption, same Worker key,
+                                 decrypted alongside the main mix at load. The two bounces
+                                 sit on one shared timeline (FFT cross-correlation) with the
+                                 static mix 1.7528 s ahead of the full mix, so a swap maps
+                                 static = full − 1.7528 s and lands on the same musical
+                                 point. Both elements feed the analyser through their own
+                                 gain, so toggling is a crossfade — no stop, no stutter. -->
+                            <div class="flex flex-wrap items-center gap-3 mt-3">
+                                <button id="abToggle" type="button" disabled
+                                        class="font-mono text-xs uppercase tracking-widest px-4 py-2 border border-vu-amber/60 text-vu-amber hover:bg-vu-amber/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        title="Switch to the static (pre-fader) mix, landed at the same point in the song and level-matched">
+                                    Swap to static mix
+                                </button>
+                                <span id="abHint" class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim opacity-0 transition-opacity duration-300" aria-hidden="true"></span>
+                            </div>
+                            <audio id="staticAudio" controls preload="metadata" class="w-full mt-3" style="display:none"
+                                   aria-label="Affection — static mix, pre-fader balance">
+                                Your browser can't play the static mix inline.
                             </audio>
                             <p id="mixStatus" class="font-mono text-xs uppercase tracking-widest text-tape-cream-dim" style="margin-top:22px; margin-bottom:10px">
                                 Stereo WAV · unmastered mix — shown exactly as mixed, ahead of mastering
@@ -813,6 +833,25 @@
             const ENC_URL = 'https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/Affection%20Mix.wav.enc';
             const KEY_URL = 'https://jm-portfolio-key-service.jmmarshall.workers.dev/key';
             const audio = document.querySelector('audio[aria-label="Affection \u2014 mix, unmastered"]');
+            const STATIC_ENC_URL = 'https://pub-c5a47ef904124b74a0eb5c45a11c76ad.r2.dev/affection/v2/Affection%20Static%20Mix.wav.enc';
+            const staticAudio = document.getElementById('staticAudio');
+            const abToggle = document.getElementById('abToggle');
+            const abHint = document.getElementById('abHint');
+            const nowPlayingLabel = document.getElementById('nowPlayingLabel');
+            const baseTextStatic = 'Stereo WAV · static mix — the pre-fader balance pass, before the creative automation';
+            // Timeline alignment of the two bounces (FFT cross-correlation of the
+            // decrypted audio, five windows across the track, spread ±0.5 ms):
+            // static mix position + 1.7528 s = full mix position.
+            const STATIC_OFFSET = 1.7528;
+            // Level match, measured on the same 90 s of music (EBU R128):
+            // static −9.0 LUFS vs main mix −23.1 LUFS → 14.1 LU hotter, with its
+            // true peak already at 0 dBFS. The A/B attenuates the static mix by
+            // that delta so a swap compares mix balance, not bounce level, and
+            // the compressed main mix stays the denser, louder-feeling one.
+            const STATIC_LEVEL_FACTOR = Math.pow(10, -14.1 / 20);   // ≈ 0.196
+            let activeVersion = 'full';                 // 'full' | 'static'
+            const otherEl = (el) => (el === audio ? staticAudio : audio);
+            const activeEl = () => (activeVersion === 'static' ? staticAudio : audio);
             const status = document.getElementById('mixStatus');
             const baseText = 'Stereo WAV \u00b7 unmastered mix \u2014 shown exactly as mixed, ahead of mastering';
             if (!audio || !status) return;
@@ -844,16 +883,32 @@
             let idleTimer = null;
             const IDLE_FRAMES = 45;   // ~0.75s of floor frames after silence starts
             let floorLeft = 0;
+            let elGains = null;       // Map: audio element -> GainNode (A/B crossfade)
             function buildGraph() {
                 if (analyser) return;
                 try {
                     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const src = ctx.createMediaElementSource(audio);
                     analyser = ctx.createAnalyser();
                     analyser.fftSize = 2048;
                     analyser.smoothingTimeConstant = 0.75;
                     analyserData = new Uint8Array(analyser.frequencyBinCount);
-                    src.connect(analyser);
+                    // Each mix element routes through its own gain into the shared
+                    // analyser, so the A/B toggle can crossfade between them and
+                    // the meter always shows whichever mix is audible.
+                    elGains = new Map();
+                    [audio, staticAudio].forEach(function (el) {
+                        if (!el) return;
+                        try {
+                            const src = ctx.createMediaElementSource(el);
+                            const g = ctx.createGain();
+                            g.gain.value = el === audio ? 1 : 0;
+                            src.connect(g);
+                            g.connect(analyser);
+                            elGains.set(el, g);
+                        } catch (e2) {
+                            console.warn('element route unavailable, playing directly:', e2);
+                        }
+                    });
                     analyser.connect(ctx.destination);
                     analyserCtx = ctx;
                     startAnalyser();
@@ -917,7 +972,7 @@
                 // the element is paused/ended; during PLAYBACK keep looping
                 // so the quiet intro and other soft passages can light the
                 // meter up the moment signal returns.
-                if (!anyAboveFloor && audio.paused) {
+                if (!anyAboveFloor && activeEl().paused) {
                     if (floorLeft === 0) floorLeft = IDLE_FRAMES;
                     floorLeft--;
                     if (floorLeft <= 0) { rafId = 0; return; }  // stop; wake on play/volume
@@ -967,17 +1022,17 @@
             // when the visitor presses play.
             async function loadMix() {
                 if (audio.src) return;
+                let passphrase = null;
                 try {
-                    sp('Preparing secure playback \u2014 fetching & decrypting\u2026');
+                    sp('Preparing secure playback — fetching & decrypting…');
                     const res = await fetch(ENC_URL);
                     if (!res.ok) throw new Error('HTTP ' + res.status);
-                    sp('Fetching encryption key\u2026');
+                    sp('Fetching encryption key…');
                     const kres = await fetch(KEY_URL, { credentials: 'omit' });
                     if (!kres.ok) throw new Error('Key service HTTP ' + kres.status);
-                    const passphrase = (await kres.text()).trim();
-                    sp('Decrypting\u2026');
-                    const buf = await res.arrayBuffer();
-                    const plain = await decryptBundle(buf, passphrase);
+                    passphrase = (await kres.text()).trim();
+                    sp('Decrypting…');
+                    const plain = await decryptBundle(await res.arrayBuffer(), passphrase);
                     audio.src = URL.createObjectURL(new Blob([plain], { type: 'audio/wav' }));
                     sp(baseText);
                     audio.load();
@@ -986,7 +1041,7 @@
                     console.error(err);
                     // The mix lives on the host + key service; if either is
                     // unreachable the honest fallback is the direct route.
-                    status.textContent = 'Playback error \u2014 could not load the mix. ';
+                    status.textContent = 'Playback error — could not load the mix. ';
                     const a = document.createElement('a');
                     a.href = 'mailto:JMMarshall.Audio@proton.me';
                     a.className = 'text-vu-amber ';
@@ -995,21 +1050,136 @@
                     a.textContent = "Email me and I'll send it over.";
                     a.rel = 'noopener';
                     status.appendChild(a);
+                    return;
+                }
+                // Static mix: second bundle, same key. Optional — if this fails
+                // the main mix still plays and the A/B button simply stays off.
+                try {
+                    sp('Preparing the static mix for A/B…');
+                    const sres = await fetch(STATIC_ENC_URL);
+                    if (!sres.ok) throw new Error('HTTP ' + sres.status);
+                    const plain = await decryptBundle(await sres.arrayBuffer(), passphrase);
+                    staticAudio.src = URL.createObjectURL(new Blob([plain], { type: 'audio/wav' }));
+                    staticAudio.volume = audio.volume;
+                    staticAudio.muted = audio.muted;
+                    staticAudio.load();
+                    abToggle.disabled = false;
+                    sp(baseText);
+                } catch (err) {
+                    console.warn('static mix unavailable — A/B toggle disabled:', err);
+                    abToggle.title = 'Static mix could not be loaded — the main mix still plays';
                 }
             }
             loadMix();
             // Browsers create the AudioContext suspended when no user gesture
             // is pending — resume it the first time real playback starts, or
             // the analyser sees only silence 0s.
-            audio.addEventListener('playing', () => { if (analyserCtx) analyserCtx.resume(); setNowPlaying(true); wakeAnalyser(); });
             // Any user interaction counts as a gesture: keep the analyser
             // context resumable from the very first click anywhere.
             document.addEventListener('pointerdown', () => { if (analyserCtx) analyserCtx.resume(); });
-            audio.addEventListener('pause', () => setNowPlaying(false));
-            audio.addEventListener('ended', () => setNowPlaying(false));
-            // Muting drops the analyser to silence too: bars fall to 0 while
-            // the "Now playing" row stays honest to actual sound.
-            audio.addEventListener('volumechange', () => setNowPlaying(audio.muted || audio.volume === 0 ? false : !audio.paused));
+
+            // Both mixes share one wiring: only the ACTIVE element drives the
+            // "now playing" row and the analyser wake; the hidden twin mirrors
+            // volume/mute so the next A/B swap sounds identical.
+            function wirePlayerEvents(el) {
+                el.addEventListener('playing', () => {
+                    if (el !== activeEl()) return;
+                    if (analyserCtx) analyserCtx.resume();
+                    setNowPlaying(true);
+                    wakeAnalyser();
+                });
+                el.addEventListener('pause', () => { if (el !== activeEl()) return; setNowPlaying(false); });
+                el.addEventListener('ended', () => { if (el !== activeEl()) return; setNowPlaying(false); });
+                // Muting drops the analyser to silence too: bars fall to 0 while
+                // the "Now playing" row stays honest to actual sound.
+                el.addEventListener('volumechange', () => {
+                    if (el !== activeEl()) return;
+                    setNowPlaying(el.muted || el.volume === 0 ? false : !el.paused);
+                    const other = otherEl(el);
+                    if (other && (other.volume !== el.volume || other.muted !== el.muted)) {
+                        other.volume = el.volume;
+                        other.muted = el.muted;
+                    }
+                });
+            }
+            wirePlayerEvents(audio);
+            if (staticAudio) wirePlayerEvents(staticAudio);
+
+            // ---- A/B swap (main mix <-> static mix) ----------------------------
+            // Works while playing: the other element is seeked to the same
+            // musical point (static + 1.7528 s = full), started, then the two
+            // element gains crossfade over ~80 ms — the sound never stops.
+            // While paused, the visible controls switch over already seated at
+            // the aligned point, ready to continue from.
+            let swapping = false;
+            function abSwitch() {
+                if (!audio.src || !staticAudio || !staticAudio.src || swapping) return;
+                const from = activeEl();
+                const to = otherEl(from);
+                if (!to || !to.src) return;
+                swapping = true;
+                try {
+                    // same musical moment, clamped inside the other file
+                    let t = from === audio ? from.currentTime - STATIC_OFFSET
+                                           : from.currentTime + STATIC_OFFSET;
+                    t = Math.max(0, Math.min(t, (to.duration || 1) - 0.05));
+                    const canCrossfade = !!(analyserCtx && elGains && elGains.has(from) && elGains.has(to));
+                    const wasPlaying = !from.paused;
+                    if (wasPlaying && canCrossfade) {
+                        to.currentTime = t;
+                        to.play();
+                        const now = analyserCtx.currentTime, fade = 0.08;
+                        const gFrom = elGains.get(from).gain, gTo = elGains.get(to).gain;
+                        gFrom.cancelScheduledValues(now); gTo.cancelScheduledValues(now);
+                        gFrom.setValueAtTime(gFrom.value, now);
+                        gTo.setValueAtTime(gTo.value, now);
+                        gFrom.linearRampToValueAtTime(0, now + fade);
+                        const lvlTo = to === staticAudio ? STATIC_LEVEL_FACTOR : 1;
+                        gTo.linearRampToValueAtTime(lvlTo, now + fade);
+                        // only silence the old element once the fade is done —
+                        // but only if the user has not toggled straight back
+                        setTimeout(() => { if (activeEl() !== from) from.pause(); }, fade * 1000 + 40);
+                    } else {
+                        // paused, or WebAudio absent: silent seat-and-switch
+                        from.pause();
+                        to.currentTime = t;
+                        if (canCrossfade) {
+                            // level comes from the gain node — seat it straight to
+                            // the target version's match factor (covers a mid-fade
+                            // re-toggle) and leave element volume untouched
+                            const g = elGains.get(to).gain;
+                            g.cancelScheduledValues(analyserCtx.currentTime);
+                            g.setValueAtTime(to === staticAudio ? STATIC_LEVEL_FACTOR : 1, analyserCtx.currentTime);
+                        } else {
+                            // no-gain fallback: match levels with element volume
+                            to.volume = from.volume * (to === staticAudio ? STATIC_LEVEL_FACTOR : 1);
+                        }
+                        to.muted = from.muted;
+                        if (wasPlaying && !canCrossfade) to.play();   // fallback: brief gap, still aligned
+                    }
+                    // the other element now owns the visible native controls
+                    from.controls = false; from.style.display = 'none';
+                    to.controls = true; to.style.display = '';
+                    activeVersion = to === staticAudio ? 'static' : 'full';
+                    status.textContent = activeVersion === 'full' ? baseText : baseTextStatic;
+                    abToggle.textContent = activeVersion === 'full' ? 'Swap to static mix' : 'Swap to full mix';
+                    if (nowPlayingLabel) {
+                        nowPlayingLabel.textContent = 'Now playing · Affection (' +
+                            (activeVersion === 'full' ? 'mix' : 'static mix') + ')';
+                    }
+                    if (abHint) {
+                        abHint.textContent = activeVersion === 'full'
+                            ? 'main mix — as mixed'
+                            : 'static mix — pre-fader · level-matched';
+                    }
+                    wakeAnalyser();
+                } catch (err) {
+                    console.error('A/B swap failed:', err);
+                } finally {
+                    swapping = false;
+                }
+            }
+            if (abToggle) abToggle.addEventListener('click', abSwitch);
         })();
     </script>
 
